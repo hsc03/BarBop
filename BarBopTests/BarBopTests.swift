@@ -7,6 +7,7 @@
 
 import Testing
 import CoreGraphics
+import Foundation
 @testable import BarBop
 
 struct BarBopTests {
@@ -177,12 +178,88 @@ struct BarBopTests {
         #expect(renderer.playedReactions.last?.location == CGPoint(x: 30, y: 40))
     }
 
+    @Test func assignmentStoreUpdatesDetectedItemWithoutDuplicating() {
+        let store = makeStore()
+        let firstDate = Date(timeIntervalSince1970: 100)
+        let secondDate = Date(timeIntervalSince1970: 200)
+
+        store.recordDetectedItem(
+            DetectedStatusItem(
+                id: "bundle:com.example.app|title:Clock",
+                bundleIdentifier: "com.example.app",
+                applicationName: "Example",
+                itemTitle: "Clock",
+                accessibilityIdentifier: nil,
+                lastDetectedAt: firstDate
+            )
+        )
+        store.recordDetectedItem(
+            DetectedStatusItem(
+                id: "bundle:com.example.app|title:Clock",
+                bundleIdentifier: "com.example.app",
+                applicationName: "Example Renamed",
+                itemTitle: "Clock",
+                accessibilityIdentifier: "clock-item",
+                lastDetectedAt: secondDate
+            )
+        )
+
+        #expect(store.detectedItems.count == 1)
+        #expect(store.detectedItems[0].applicationName == "Example Renamed")
+        #expect(store.detectedItems[0].accessibilityIdentifier == "clock-item")
+        #expect(store.detectedItems[0].lastDetectedAt == secondDate)
+    }
+
+    @Test func assignmentStoreFallsBackToDefaultCharacter() {
+        let store = makeStore()
+
+        #expect(store.characterID(for: "status-item:unknown") == Character.placeholderID)
+    }
+
+    @Test func assignmentStorePersistsAssignments() {
+        let suiteName = uniqueSuiteName()
+        let userDefaults = UserDefaults(suiteName: suiteName)!
+        userDefaults.removePersistentDomain(forName: suiteName)
+
+        let firstStore = AssignmentStore(userDefaults: userDefaults, storageKey: "test-store")
+        let characterID = UUID(uuidString: "6F8E2F7C-E280-4F2F-81F7-E09D32A5AC65")!
+        firstStore.assign(characterID: characterID, to: "bundle:com.example.app")
+
+        let secondStore = AssignmentStore(userDefaults: userDefaults, storageKey: "test-store")
+
+        #expect(secondStore.characterID(for: "bundle:com.example.app") == characterID)
+    }
+
+    @Test func assignmentStoreRecoversFromCorruptedData() {
+        let suiteName = uniqueSuiteName()
+        let userDefaults = UserDefaults(suiteName: suiteName)!
+        userDefaults.removePersistentDomain(forName: suiteName)
+        userDefaults.set(Data("not-json".utf8), forKey: "test-store")
+
+        let store = AssignmentStore(userDefaults: userDefaults, storageKey: "test-store")
+
+        #expect(store.detectedItems.isEmpty)
+        #expect(store.assignments.isEmpty)
+        #expect(store.settings == ReactionSettings.defaults)
+    }
+
     private var sampleScreen: ScreenGeometry {
         ScreenGeometry(
             id: 1,
             frame: CGRect(x: 0, y: 0, width: 1440, height: 900),
             visibleFrame: CGRect(x: 0, y: 0, width: 1440, height: 875)
         )
+    }
+
+    private func makeStore() -> AssignmentStore {
+        let suiteName = uniqueSuiteName()
+        let userDefaults = UserDefaults(suiteName: suiteName)!
+        userDefaults.removePersistentDomain(forName: suiteName)
+        return AssignmentStore(userDefaults: userDefaults, storageKey: "test-store")
+    }
+
+    private func uniqueSuiteName() -> String {
+        "BarBopTests.\(UUID().uuidString)"
     }
 
 }
