@@ -1,5 +1,5 @@
 //
-//  OverlayWindowController.swift
+//  MenuBarEffectController.swift
 //  BarBop
 //
 //  Created by Codex on 7/13/26.
@@ -7,34 +7,31 @@
 
 import AppKit
 
-final class OverlayWindowController: ReactionRendering {
-    private let overlaySize = CGSize(width: 96, height: 96)
+protocol MenuBarEffectRendering: AnyObject {
+    func cancelCurrentEffect()
+    func playEffect(in menuBarFrame: CGRect, settings: EffectSettings, reduceMotion: Bool)
+}
+
+final class MenuBarEffectController: MenuBarEffectRendering {
     private var panel: NSPanel?
-    private var renderer: CharacterRenderer?
+    private var renderer: MenuBarEffectRenderer?
     private var hideWorkItem: DispatchWorkItem?
 
-    func playReaction(at location: CGPoint, on screen: ScreenGeometry, motionMode: ReactionMotionMode) {
-        cancelCurrentReaction()
+    func playEffect(in menuBarFrame: CGRect, settings: EffectSettings, reduceMotion: Bool) {
+        cancelCurrentEffect()
 
-        let panel = panel ?? makePanel()
-        let renderer = renderer ?? CharacterRenderer(frame: CGRect(origin: .zero, size: overlaySize))
+        let panel = panel ?? makePanel(size: menuBarFrame.size)
+        let renderer = renderer ?? MenuBarEffectRenderer(frame: CGRect(origin: .zero, size: menuBarFrame.size))
         self.panel = panel
         self.renderer = renderer
 
-        let origin = MenuBarGeometry.clampedOverlayOrigin(
-            centeredAt: location,
-            overlaySize: overlaySize,
-            screenFrame: screen.frame
-        )
-
-        renderer.frame = CGRect(origin: .zero, size: overlaySize)
-        renderer.resetForPlayback()
+        renderer.frame = CGRect(origin: .zero, size: menuBarFrame.size)
         panel.contentView = renderer
-        panel.setFrame(CGRect(origin: origin, size: overlaySize), display: true)
+        panel.setFrame(menuBarFrame, display: true)
         panel.alphaValue = 1
         panel.orderFrontRegardless()
 
-        renderer.play(motionMode: motionMode) { [weak self] in
+        renderer.play(settings: settings, reduceMotion: reduceMotion) { [weak self] in
             self?.hide()
         }
 
@@ -42,10 +39,10 @@ final class OverlayWindowController: ReactionRendering {
             self?.hide()
         }
         hideWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9, execute: workItem)
+        DispatchQueue.main.asyncAfter(deadline: .now() + settings.duration + 0.1, execute: workItem)
     }
 
-    func cancelCurrentReaction() {
+    func cancelCurrentEffect() {
         hideWorkItem?.cancel()
         hideWorkItem = nil
         renderer?.stop()
@@ -55,12 +52,13 @@ final class OverlayWindowController: ReactionRendering {
     func hide() {
         hideWorkItem?.cancel()
         hideWorkItem = nil
+        renderer?.stop()
         panel?.orderOut(nil)
     }
 
-    private func makePanel() -> NSPanel {
+    private func makePanel(size: CGSize) -> NSPanel {
         let panel = NSPanel(
-            contentRect: CGRect(origin: .zero, size: overlaySize),
+            contentRect: CGRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: true

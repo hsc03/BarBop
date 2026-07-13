@@ -6,14 +6,10 @@
 //
 
 import AppKit
-import OSLog
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private let logger = Logger(subsystem: "io.github.hsc03.BarBop", category: "StatusItemResolver")
-    private let environment = AppEnvironment.shared
-    private let statusItemResolver = StatusItemResolver()
-    private let overlayWindowController = OverlayWindowController()
-    private lazy var reactionCoordinator = ReactionCoordinator(renderer: overlayWindowController)
+    private let effectController = MenuBarEffectController()
+    private lazy var effectCoordinator = EffectCoordinator(renderer: effectController)
     private lazy var eventMonitor = MenuBarEventMonitor { [weak self] click in
         self?.handleMenuBarClick(click)
     }
@@ -28,7 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         eventMonitor.stop()
-        overlayWindowController.hide()
+        effectController.hide()
     }
 
     private func configureStatusItem() {
@@ -37,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.toolTip = "BarBop"
 
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "BarBop Prototype", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "BarBop", action: nil, keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit BarBop", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         item.menu = menu
@@ -50,30 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let resolution = statusItemResolver.resolve(at: click.location)
-        logStatusItemResolution(resolution)
-        environment.assignmentStore.recordDetectedItem(DetectedStatusItem(resolution: resolution))
-
-        guard environment.assignmentStore.settings.isEnabled else {
-            return
-        }
-
-        reactionCoordinator.handleMenuBarClick(click)
-    }
-
-    private func logStatusItemResolution(_ resolution: StatusItemResolution) {
-        logger.debug(
-            """
-            status item resolved identity=\(resolution.identity, privacy: .public) \
-            app=\(resolution.applicationName ?? "nil", privacy: .public) \
-            bundle=\(resolution.bundleIdentifier ?? "nil", privacy: .public) \
-            pid=\(resolution.processIdentifier.map(String.init) ?? "nil", privacy: .public) \
-            role=\(resolution.role ?? "nil", privacy: .public) \
-            title=\(resolution.title ?? "nil", privacy: .public) \
-            axid=\(resolution.accessibilityIdentifier ?? "nil", privacy: .public) \
-            error=\(resolution.errorDescription ?? "nil", privacy: .public)
-            """
-        )
+        effectCoordinator.handleMenuBarClick(click)
     }
 
     private func isOwnStatusItemClick(_ location: CGPoint) -> Bool {

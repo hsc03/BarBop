@@ -5,21 +5,20 @@
 //  Created by 황성철 on 7/7/26.
 //
 
+import AppKit
 import SwiftUI
 
 struct ContentView: View {
-    @State private var snapshot = SettingsSnapshot(environment: .shared)
+    @State private var settings = AppEnvironment.shared.effectSettingsStore.settings
     private let environment = AppEnvironment.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             header
             controls
-            Divider()
-            detectedItemsList
-            actions
+            Spacer()
         }
-        .frame(minWidth: 620, minHeight: 480, alignment: .topLeading)
+        .frame(minWidth: 520, minHeight: 320, alignment: .topLeading)
         .padding(20)
         .onAppear {
             reload()
@@ -31,211 +30,115 @@ struct ContentView: View {
             Text("BarBop Settings")
                 .font(.title2)
                 .fontWeight(.semibold)
-            Text("Detected menu bar items and prototype character assignments are stored locally.")
+            Text("Adds a short click-through color effect when you click the macOS menu bar.")
                 .foregroundStyle(.secondary)
         }
     }
 
     private var controls: some View {
-        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 12) {
+        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 14) {
             GridRow {
-                Text("Reactions")
+                Text("Effect")
                 Toggle("Enabled", isOn: settingsBinding(\.isEnabled))
                     .labelsHidden()
             }
 
             GridRow {
-                Text("Default Character")
-                characterPicker(selection: settingsBinding(\.defaultCharacterID))
+                Text("Color")
+                ColorPicker("Effect Color", selection: colorBinding, supportsOpacity: false)
+                    .labelsHidden()
             }
 
             GridRow {
-                Text("Size")
-                Picker("Size", selection: settingsBinding(\.size)) {
-                    ForEach(ReactionSettings.Size.allCases) { size in
-                        Text(label(for: size)).tag(size)
+                Text("Opacity")
+                HStack {
+                    Slider(value: settingsBinding(\.opacity), in: 0.05...1)
+                    Text(settings.opacity.formatted(.percent.precision(.fractionLength(0))))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .frame(width: 48, alignment: .trailing)
+                }
+            }
+
+            GridRow {
+                Text("Duration")
+                HStack {
+                    Slider(value: settingsBinding(\.duration), in: 0.1...1)
+                    Text("\(settings.duration, specifier: "%.2f")s")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .frame(width: 48, alignment: .trailing)
+                }
+            }
+
+            GridRow {
+                Text("Style")
+                Picker("Style", selection: settingsBinding(\.style)) {
+                    ForEach(EffectSettings.Style.allCases) { style in
+                        Text(label(for: style)).tag(style)
                     }
                 }
                 .pickerStyle(.segmented)
             }
-
-            GridRow {
-                Text("Motion")
-                Picker("Motion", selection: settingsBinding(\.motionIntensity)) {
-                    ForEach(ReactionSettings.MotionIntensity.allCases) { intensity in
-                        Text(label(for: intensity)).tag(intensity)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
         }
     }
 
-    private var detectedItemsList: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Detected Menu Bar Items")
-                .font(.headline)
-
-            if snapshot.detectedItems.isEmpty {
-                ContentUnavailableView(
-                    "No Items Detected",
-                    systemImage: "menubar.rectangle",
-                    description: Text("Click menu bar items while BarBop is running to populate this list.")
-                )
-                .frame(maxWidth: .infinity, minHeight: 180)
-            } else {
-                List(snapshot.detectedItems) { item in
-                    detectedItemRow(item)
-                }
-                .frame(minHeight: 220)
-            }
-        }
-    }
-
-    private func detectedItemRow(_ item: DetectedStatusItem) -> some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(displayName(for: item))
-                    .font(.body)
-                Text(detailText(for: item))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text("Last detected \(item.lastDetectedAt.formatted(date: .abbreviated, time: .standard))")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-
-            Spacer()
-
-            characterPicker(
-                selection: Binding(
-                    get: {
-                        snapshot.assignmentMap[item.id] ?? snapshot.settings.defaultCharacterID
-                    },
-                    set: { characterID in
-                        environment.assignmentStore.assign(characterID: characterID, to: item.id)
-                        reload()
-                    }
-                )
-            )
-            .frame(width: 180)
-
-            Button("Default") {
-                environment.assignmentStore.removeAssignment(for: item.id)
-                reload()
-            }
-            .disabled(snapshot.assignmentMap[item.id] == nil)
-        }
-        .padding(.vertical, 4)
-    }
-
-    private var actions: some View {
-        HStack {
-            Button("Reset Mappings") {
-                environment.assignmentStore.resetAssignments()
-                reload()
-            }
-            .disabled(snapshot.assignments.isEmpty)
-
-            Button("Clear Detected Items") {
-                environment.assignmentStore.clearDetectedItems()
-                reload()
-            }
-            .disabled(snapshot.detectedItems.isEmpty)
-
-            Spacer()
-
-            Button("Reload") {
-                reload()
-            }
-        }
-    }
-
-    private func characterPicker(selection: Binding<UUID>) -> some View {
-        Picker("Character", selection: selection) {
-            ForEach(snapshot.characters) { character in
-                Text(character.name).tag(character.id)
-            }
-        }
-    }
-
-    private func settingsBinding<Value>(_ keyPath: WritableKeyPath<ReactionSettings, Value>) -> Binding<Value> {
+    private var colorBinding: Binding<Color> {
         Binding(
             get: {
-                snapshot.settings[keyPath: keyPath]
+                Color(settings.color.nsColor)
             },
-            set: { value in
-                var settings = snapshot.settings
-                settings[keyPath: keyPath] = value
-                environment.assignmentStore.updateSettings(settings)
-                reload()
+            set: { color in
+                var red: CGFloat = 0
+                var green: CGFloat = 0
+                var blue: CGFloat = 0
+                var alpha: CGFloat = 0
+                NSColor(color).usingColorSpace(.sRGB)?.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+
+                updateSettings { settings in
+                    settings.color = CodableColor(
+                        red: Double(red),
+                        green: Double(green),
+                        blue: Double(blue),
+                        alpha: 1
+                    )
+                }
             }
         )
     }
 
-    private func reload() {
-        snapshot = SettingsSnapshot(environment: environment)
-    }
-
-    private func displayName(for item: DetectedStatusItem) -> String {
-        if let itemTitle = item.itemTitle, !itemTitle.isEmpty {
-            return itemTitle
-        }
-
-        if let applicationName = item.applicationName, !applicationName.isEmpty {
-            return applicationName
-        }
-
-        return "Unidentified Item"
-    }
-
-    private func detailText(for item: DetectedStatusItem) -> String {
-        [item.applicationName, item.bundleIdentifier, item.accessibilityIdentifier]
-            .compactMap { value in
-                guard let value, !value.isEmpty else {
-                    return nil
+    private func settingsBinding<Value>(_ keyPath: WritableKeyPath<EffectSettings, Value>) -> Binding<Value> {
+        Binding(
+            get: {
+                settings[keyPath: keyPath]
+            },
+            set: { value in
+                updateSettings { settings in
+                    settings[keyPath: keyPath] = value
                 }
-
-                return value
             }
-            .joined(separator: " / ")
+        )
     }
 
-    private func label(for size: ReactionSettings.Size) -> String {
-        switch size {
-        case .small:
-            return "Small"
-        case .medium:
-            return "Medium"
-        case .large:
-            return "Large"
+    private func updateSettings(_ update: (inout EffectSettings) -> Void) {
+        var updatedSettings = settings
+        update(&updatedSettings)
+        environment.effectSettingsStore.updateSettings(updatedSettings)
+        reload()
+    }
+
+    private func reload() {
+        settings = environment.effectSettingsStore.settings
+    }
+
+    private func label(for style: EffectSettings.Style) -> String {
+        switch style {
+        case .flash:
+            return "Flash"
+        case .pulse:
+            return "Pulse"
+        case .sweep:
+            return "Sweep"
         }
-    }
-
-    private func label(for intensity: ReactionSettings.MotionIntensity) -> String {
-        switch intensity {
-        case .subtle:
-            return "Subtle"
-        case .normal:
-            return "Normal"
-        case .playful:
-            return "Playful"
-        }
-    }
-}
-
-private struct SettingsSnapshot {
-    var characters: [Character]
-    var detectedItems: [DetectedStatusItem]
-    var assignments: [CharacterAssignment]
-    var assignmentMap: [String: UUID]
-    var settings: ReactionSettings
-
-    init(environment: AppEnvironment) {
-        characters = environment.characterStore.characters
-        detectedItems = environment.assignmentStore.detectedItems
-        assignments = environment.assignmentStore.assignments
-        assignmentMap = Dictionary(uniqueKeysWithValues: assignments.map { ($0.statusItemID, $0.characterID) })
-        settings = environment.assignmentStore.settings
     }
 }

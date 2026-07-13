@@ -10,14 +10,11 @@ import Foundation
 final class AppEnvironment {
     static let shared = AppEnvironment()
 
-    let characterStore: CharacterStore
-    let assignmentStore: AssignmentStore
+    let effectSettingsStore: EffectSettingsStore
 
     init(
-        characterStore: CharacterStore = CharacterStore(),
-        assignmentStore: AssignmentStore = AssignmentStore()
+        effectSettingsStore: EffectSettingsStore = EffectSettingsStore()
     ) {
-        self.characterStore = characterStore
-        self.assignmentStore = assignmentStore
+        self.effectSettingsStore = effectSettingsStore
     }
 }

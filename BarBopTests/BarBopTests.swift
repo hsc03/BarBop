@@ -5,9 +5,9 @@
 //  Created by 황성철 on 7/7/26.
 //
 
-import Testing
 import CoreGraphics
 import Foundation
+import Testing
 @testable import BarBop
 
 struct BarBopTests {
@@ -75,172 +75,106 @@ struct BarBopTests {
         #expect(origin == CGPoint(x: 1360, y: 820))
     }
 
-    @Test func identityPrefersBundleAndAccessibilityIdentifier() {
-        let id = StatusItemIdentity.makeID(
-            from: StatusItemIdentityInput(
-                bundleIdentifier: "com.example.MenuApp",
-                accessibilityIdentifier: "status.clock",
-                title: "Clock",
-                processIdentifier: 101
-            )
-        )
-
-        #expect(id == "bundle:com.example.MenuApp|axid:status.clock")
-    }
-
-    @Test func identityFallsBackToBundleAndTitle() {
-        let id = StatusItemIdentity.makeID(
-            from: StatusItemIdentityInput(
-                bundleIdentifier: "com.example.MenuApp",
-                accessibilityIdentifier: nil,
-                title: "Clock",
-                processIdentifier: 101
-            )
-        )
-
-        #expect(id == "bundle:com.example.MenuApp|title:Clock")
-    }
-
-    @Test func identityUsesSystemPidWhenSystemItemHasNoStableText() {
-        let id = StatusItemIdentity.makeID(
-            from: StatusItemIdentityInput(
-                bundleIdentifier: "com.apple.controlcenter",
-                accessibilityIdentifier: nil,
-                title: nil,
-                processIdentifier: 202
-            )
-        )
-
-        #expect(id == "system:com.apple.controlcenter|pid:202")
-    }
-
-    @Test func identityFallsBackToBundleOnly() {
-        let id = StatusItemIdentity.makeID(
-            from: StatusItemIdentityInput(
-                bundleIdentifier: "com.example.MenuApp",
-                accessibilityIdentifier: nil,
-                title: nil,
-                processIdentifier: 101
-            )
-        )
-
-        #expect(id == "bundle:com.example.MenuApp")
-    }
-
-    @Test func identityUsesUnknownWhenNoStableInputsExist() {
-        let id = StatusItemIdentity.makeID(
-            from: StatusItemIdentityInput(
-                bundleIdentifier: nil,
-                accessibilityIdentifier: nil,
-                title: "   ",
-                processIdentifier: 101
-            )
-        )
-
-        #expect(id == StatusItemIdentity.unknown)
-    }
-
-    @Test func reactionCoordinatorUsesFullMotionByDefault() {
-        let renderer = FakeReactionRenderer()
-        let coordinator = ReactionCoordinator(renderer: renderer, reduceMotionProvider: { false })
-        let click = MenuBarClick(location: CGPoint(x: 10, y: 20), screen: sampleScreen)
-
-        coordinator.handleMenuBarClick(click)
-
-        #expect(renderer.cancelCount == 1)
-        #expect(renderer.playedReactions == [
-            FakeReaction(location: CGPoint(x: 10, y: 20), screen: sampleScreen, motionMode: .fullMotion)
-        ])
-    }
-
-    @Test func reactionCoordinatorUsesReducedMotionWhenRequested() {
-        let renderer = FakeReactionRenderer()
-        let coordinator = ReactionCoordinator(renderer: renderer, reduceMotionProvider: { true })
-        let click = MenuBarClick(location: CGPoint(x: 12, y: 24), screen: sampleScreen)
-
-        coordinator.handleMenuBarClick(click)
-
-        #expect(renderer.cancelCount == 1)
-        #expect(renderer.playedReactions == [
-            FakeReaction(location: CGPoint(x: 12, y: 24), screen: sampleScreen, motionMode: .reducedMotion)
-        ])
-    }
-
-    @Test func reactionCoordinatorCancelsBeforeEveryReaction() {
-        let renderer = FakeReactionRenderer()
-        let coordinator = ReactionCoordinator(renderer: renderer, reduceMotionProvider: { false })
-
-        coordinator.handleMenuBarClick(MenuBarClick(location: CGPoint(x: 10, y: 20), screen: sampleScreen))
-        coordinator.handleMenuBarClick(MenuBarClick(location: CGPoint(x: 30, y: 40), screen: sampleScreen))
-
-        #expect(renderer.cancelCount == 2)
-        #expect(renderer.playedReactions.count == 2)
-        #expect(renderer.playedReactions.last?.location == CGPoint(x: 30, y: 40))
-    }
-
-    @Test func assignmentStoreUpdatesDetectedItemWithoutDuplicating() {
-        let store = makeStore()
-        let firstDate = Date(timeIntervalSince1970: 100)
-        let secondDate = Date(timeIntervalSince1970: 200)
-
-        store.recordDetectedItem(
-            DetectedStatusItem(
-                id: "bundle:com.example.app|title:Clock",
-                bundleIdentifier: "com.example.app",
-                applicationName: "Example",
-                itemTitle: "Clock",
-                accessibilityIdentifier: nil,
-                lastDetectedAt: firstDate
-            )
-        )
-        store.recordDetectedItem(
-            DetectedStatusItem(
-                id: "bundle:com.example.app|title:Clock",
-                bundleIdentifier: "com.example.app",
-                applicationName: "Example Renamed",
-                itemTitle: "Clock",
-                accessibilityIdentifier: "clock-item",
-                lastDetectedAt: secondDate
-            )
-        )
-
-        #expect(store.detectedItems.count == 1)
-        #expect(store.detectedItems[0].applicationName == "Example Renamed")
-        #expect(store.detectedItems[0].accessibilityIdentifier == "clock-item")
-        #expect(store.detectedItems[0].lastDetectedAt == secondDate)
-    }
-
-    @Test func assignmentStoreFallsBackToDefaultCharacter() {
+    @Test func effectSettingsStoreLoadsDefaults() {
         let store = makeStore()
 
-        #expect(store.characterID(for: "status-item:unknown") == Character.placeholderID)
+        #expect(store.settings == EffectSettings.defaults)
     }
 
-    @Test func assignmentStorePersistsAssignments() {
+    @Test func effectSettingsStorePersistsSettings() {
         let suiteName = uniqueSuiteName()
         let userDefaults = UserDefaults(suiteName: suiteName)!
         userDefaults.removePersistentDomain(forName: suiteName)
 
-        let firstStore = AssignmentStore(userDefaults: userDefaults, storageKey: "test-store")
-        let characterID = UUID(uuidString: "6F8E2F7C-E280-4F2F-81F7-E09D32A5AC65")!
-        firstStore.assign(characterID: characterID, to: "bundle:com.example.app")
+        let firstStore = EffectSettingsStore(userDefaults: userDefaults, storageKey: "test-store")
+        let settings = EffectSettings(
+            isEnabled: false,
+            color: CodableColor(red: 1, green: 0.2, blue: 0.1),
+            opacity: 0.7,
+            duration: 0.5,
+            style: .pulse
+        )
+        firstStore.updateSettings(settings)
 
-        let secondStore = AssignmentStore(userDefaults: userDefaults, storageKey: "test-store")
+        let secondStore = EffectSettingsStore(userDefaults: userDefaults, storageKey: "test-store")
 
-        #expect(secondStore.characterID(for: "bundle:com.example.app") == characterID)
+        #expect(secondStore.settings == settings)
     }
 
-    @Test func assignmentStoreRecoversFromCorruptedData() {
+    @Test func effectSettingsStoreRecoversFromCorruptedData() {
         let suiteName = uniqueSuiteName()
         let userDefaults = UserDefaults(suiteName: suiteName)!
         userDefaults.removePersistentDomain(forName: suiteName)
         userDefaults.set(Data("not-json".utf8), forKey: "test-store")
 
-        let store = AssignmentStore(userDefaults: userDefaults, storageKey: "test-store")
+        let store = EffectSettingsStore(userDefaults: userDefaults, storageKey: "test-store")
 
-        #expect(store.detectedItems.isEmpty)
-        #expect(store.assignments.isEmpty)
-        #expect(store.settings == ReactionSettings.defaults)
+        #expect(store.settings == EffectSettings.defaults)
+    }
+
+    @Test func effectSettingsStoreClampsUnsafeValues() {
+        let store = makeStore()
+        store.updateSettings(
+            EffectSettings(
+                isEnabled: true,
+                color: CodableColor(red: 0, green: 0, blue: 1),
+                opacity: 3,
+                duration: -4,
+                style: .flash
+            )
+        )
+
+        #expect(store.settings.opacity == 1)
+        #expect(store.settings.duration == 0.1)
+    }
+
+    @Test func effectCoordinatorUsesMenuBarFrameAndSettings() {
+        let renderer = FakeMenuBarEffectRenderer()
+        let store = makeStore()
+        let settings = EffectSettings(
+            isEnabled: true,
+            color: CodableColor(red: 0.2, green: 0.3, blue: 0.4),
+            opacity: 0.5,
+            duration: 0.4,
+            style: .flash
+        )
+        store.updateSettings(settings)
+        let coordinator = EffectCoordinator(
+            renderer: renderer,
+            settingsStore: store,
+            reduceMotionProvider: { true }
+        )
+
+        coordinator.handleMenuBarClick(MenuBarClick(location: CGPoint(x: 120, y: 888), screen: sampleScreen))
+
+        #expect(renderer.cancelCount == 1)
+        #expect(renderer.playedEffects == [
+            FakeMenuBarEffect(
+                menuBarFrame: CGRect(x: 0, y: 875, width: 1440, height: 25),
+                settings: settings,
+                reduceMotion: true
+            )
+        ])
+    }
+
+    @Test func effectCoordinatorCancelsWhenDisabled() {
+        let renderer = FakeMenuBarEffectRenderer()
+        let store = makeStore()
+        store.updateSettings(
+            EffectSettings(
+                isEnabled: false,
+                color: CodableColor(red: 0, green: 0, blue: 1),
+                opacity: 0.5,
+                duration: 0.3,
+                style: .flash
+            )
+        )
+        let coordinator = EffectCoordinator(renderer: renderer, settingsStore: store, reduceMotionProvider: { false })
+
+        coordinator.handleMenuBarClick(MenuBarClick(location: CGPoint(x: 120, y: 888), screen: sampleScreen))
+
+        #expect(renderer.cancelCount == 1)
+        #expect(renderer.playedEffects.isEmpty)
     }
 
     private var sampleScreen: ScreenGeometry {
@@ -251,34 +185,39 @@ struct BarBopTests {
         )
     }
 
-    private func makeStore() -> AssignmentStore {
+    private func makeStore() -> EffectSettingsStore {
         let suiteName = uniqueSuiteName()
         let userDefaults = UserDefaults(suiteName: suiteName)!
         userDefaults.removePersistentDomain(forName: suiteName)
-        return AssignmentStore(userDefaults: userDefaults, storageKey: "test-store")
+        return EffectSettingsStore(userDefaults: userDefaults, storageKey: "test-store")
     }
 
     private func uniqueSuiteName() -> String {
         "BarBopTests.\(UUID().uuidString)"
     }
-
 }
 
-private struct FakeReaction: Equatable {
-    let location: CGPoint
-    let screen: ScreenGeometry
-    let motionMode: ReactionMotionMode
+private struct FakeMenuBarEffect: Equatable {
+    let menuBarFrame: CGRect
+    let settings: EffectSettings
+    let reduceMotion: Bool
 }
 
-private final class FakeReactionRenderer: ReactionRendering {
+private final class FakeMenuBarEffectRenderer: MenuBarEffectRendering {
     var cancelCount = 0
-    var playedReactions: [FakeReaction] = []
+    var playedEffects: [FakeMenuBarEffect] = []
 
-    func cancelCurrentReaction() {
+    func cancelCurrentEffect() {
         cancelCount += 1
     }
 
-    func playReaction(at location: CGPoint, on screen: ScreenGeometry, motionMode: ReactionMotionMode) {
-        playedReactions.append(FakeReaction(location: location, screen: screen, motionMode: motionMode))
+    func playEffect(in menuBarFrame: CGRect, settings: EffectSettings, reduceMotion: Bool) {
+        playedEffects.append(
+            FakeMenuBarEffect(
+                menuBarFrame: menuBarFrame,
+                settings: settings,
+                reduceMotion: reduceMotion
+            )
+        )
     }
 }
