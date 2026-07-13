@@ -24,8 +24,9 @@ Use three long-lived branches:
   validated work from `develop` when preparing a distribution build.
 - `develop`: integration branch for completed feature work.
 
-Feature development must happen on short-lived branches created from
-`develop`.
+During the current product pivot, implementation work can happen directly on
+`develop`. Once the MVP stabilizes and work becomes less exploratory, return to
+short-lived feature branches created from `develop`.
 
 Recommended naming:
 
@@ -34,7 +35,7 @@ Recommended naming:
 - `feature/character-store`
 - `fix/overlay-positioning`
 
-Merge flow:
+Default merge flow after the pivot stabilizes:
 
 1. Create a feature branch from the latest `develop`.
 2. Implement the scoped phase or fix.
@@ -49,6 +50,7 @@ Merge flow:
 Operational rules:
 
 - Do not commit feature work directly to `main` or `release`.
+- During the pivot, keep direct `develop` commits small and reversible.
 - Keep release-only changes, such as version bumps and packaging metadata, on
   `release` unless they are also needed for ongoing development.
 - If a release fix is made on `release`, port it back to `develop`.
