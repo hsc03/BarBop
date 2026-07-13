@@ -94,6 +94,7 @@ MVP에 포함한다.
 - 투명도 설정
 - 지속시간 설정
 - 기본 효과 스타일 `Flash`
+- 효과 스타일 `Pulse`, `Sweep`, `Aurora`
 - 설정 저장 및 손상 데이터 복구
 - Reduce Motion일 때 단순 페이드 효과
 - 수동 검증 체크리스트
@@ -121,13 +122,13 @@ MVP의 기본 스타일이다.
 
 메뉴바 전체가 설정 색상으로 나타난 뒤 한 번 더 약하게 맥동한다.
 
-MVP 이후 추가한다.
+현재 구현되어 있다.
 
 ### Sweep
 
 클릭 위치 또는 메뉴바 왼쪽에서 시작해 색상 레이어가 수평으로 지나간다.
 
-MVP 이후 추가한다.
+현재 구현되어 있다.
 
 ### Aurora
 
@@ -135,7 +136,7 @@ MVP 이후 추가한다.
 
 특정 브랜드의 고유 시각 표현을 참조하지 않고 BarBop 고유의 추상적인 빛 효과로 구현한다.
 
-MVP 이후 추가한다.
+현재 구현되어 있다.
 
 ### Reduce Motion
 
@@ -347,10 +348,10 @@ struct EffectSettings: Codable, Equatable {
 
 작업:
 
-- 수동 검증 문서 작성
+- 수동 검증 문서 작성: `docs/phase-5-quality-checklist.md`
 - README 업데이트
-- 개인정보/권한 설명 문서 작성
-- Release 빌드 검증
+- 개인정보/권한 설명 문서 작성: `docs/privacy-and-permissions.md`
+- Release 빌드 검증 및 결과 기록: `docs/phase-5-validation-report.md`
 
 완료 조건:
 

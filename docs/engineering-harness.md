@@ -3,15 +3,15 @@
 This document defines the working harness for implementing BarBop in small,
 verifiable slices. It is intentionally separate from product planning: the goal
 is to keep each development step testable, reviewable, and safe for a macOS
-menu bar utility.
+menu bar click-effect utility.
 
 ## Principles
 
 - Prefer a thin vertical slice over broad unfinished infrastructure.
 - Keep system integration behind small boundaries so pure logic can be tested.
-- Treat Accessibility, global event monitoring, and overlay windows as manual
+- Treat global event monitoring and overlay windows as manual
   verification surfaces unless behavior can be isolated into pure functions.
-- Never let a failed best-effort integration path break the default reaction.
+- Never let a failed best-effort integration path break the default effect.
 - Preserve the original menu behavior as the primary acceptance criterion.
 
 ## Branching Model
@@ -31,8 +31,8 @@ short-lived feature branches created from `develop`.
 Recommended naming:
 
 - `feature/phase-1-technical-prototype`
-- `feature/phase-2-status-item-resolver`
-- `feature/character-store`
+- `feature/menu-bar-effect`
+- `feature/effect-settings`
 - `fix/overlay-positioning`
 
 Default merge flow after the pivot stabilizes:
@@ -67,9 +67,8 @@ Initial coverage targets:
 
 - Menu bar region calculation.
 - Multi-screen coordinate selection.
-- Overlay clamping inside visible screen bounds.
-- Stable status item identity generation.
-- Assignment and fallback selection.
+- Effect settings encoding, decoding, and recovery.
+- Codable color conversion.
 - Store decoding recovery from invalid data.
 
 Rules:
@@ -85,10 +84,9 @@ Use narrow AppKit objects in the app target for behavior that needs the real
 system:
 
 - Global mouse event monitor.
-- Accessibility hit testing.
 - Non-activating transparent overlay panel.
-- Menu bar status item exclusion.
-- Login item registration.
+- Menu bar click effect rendering.
+- Own status item exclusion.
 
 Rules:
 
@@ -96,7 +94,8 @@ Rules:
 - Global monitors must have explicit start and stop methods.
 - Overlay playback must expose enough state for diagnostics, but not for product
   UI coupling.
-- The app must remain usable without Accessibility permission.
+- The app must remain usable when global event observation is unavailable or
+  restricted.
 
 ### Manual Verification Harness
 
@@ -104,15 +103,15 @@ Each phase that touches system behavior must include a short manual checklist.
 The checklist records what was verified on the current machine and what remains
 untested.
 
-Required checks for phase 1:
+Required checks for menu bar effect behavior:
 
-- Left click on macOS menu bar item shows the temporary reaction.
-- Right click on macOS menu bar item shows the temporary reaction if the item
+- Left click on macOS menu bar item shows the temporary effect.
+- Right click on macOS menu bar item shows the temporary effect if the item
   opens a menu.
 - Normal menu opens without delay or focus change.
-- Non-menu-bar clicks do not show the reaction.
-- Reaction appears on the display where the click occurred.
-- The app's own status item does not trigger the reaction.
+- Non-menu-bar clicks do not show the effect.
+- Effect appears on the display where the click occurred.
+- The app's own status item does not trigger the effect.
 - Overlay never captures mouse input.
 
 ## Phase Gates
@@ -133,41 +132,63 @@ Exit criteria:
 - Build succeeds.
 - Coordinate tests pass.
 - Manual verification checklist is completed or gaps are documented.
-- No settings UI, character store, or Accessibility resolver is added yet.
+- No settings UI or advanced effect style work is added yet.
 
-### Phase 2: Status Item Identity
+### Phase 2: Full Menu Bar Effect
 
 Implementation scope:
 
-- Add Accessibility hit testing at the clicked menu bar coordinate.
-- Collect best-effort role, title, identifier, PID, bundle ID, and app name.
-- Generate stable identity keys with a pure function.
-- Log debug information without crashing on missing permissions or missing data.
+- Replace the prototype overlay with a full-width menu bar effect.
+- Keep the panel click-through and non-activating.
+- Cancel an existing effect before starting a new one.
 
 Exit criteria:
 
 - Build succeeds.
-- Identity tests pass.
-- Representative system and third-party status items produce useful logs when
-  available.
-- Unknown items still return a safe fallback identity.
+- Menu bar clicks show the configured effect.
+- Original menu behavior is preserved.
 
-### Phase 3: Reaction Core
+### Phase 3: Settings
 
 Implementation scope:
 
-- Introduce `ReactionCoordinator`, `OverlayWindowController`, and
-  `CharacterRenderer`.
-- Replace the red circle with one temporary character reaction.
-- Cancel the previous reaction on rapid repeated clicks.
-- Respect Reduce Motion.
-- Stop timers when idle.
+- Add effect settings UI.
+- Persist settings locally.
+- Recover corrupted settings data to defaults.
 
 Exit criteria:
 
 - Build succeeds.
-- Coordinator tests pass.
-- Manual verification confirms no panel accumulation or input capture.
+- Store tests pass or compile in restricted environments.
+- Manual verification confirms setting changes apply on the next click.
+
+### Phase 4: Effect Styles
+
+Implementation scope:
+
+- Add Pulse, Sweep, and Aurora styles.
+- Respect Reduce Motion by falling back to a simple fade.
+
+Exit criteria:
+
+- Build succeeds.
+- All styles are selectable.
+- Manual verification confirms each style plays and does not capture input.
+
+### Phase 5: Quality Documentation
+
+Implementation scope:
+
+- Update README.
+- Add privacy and permissions documentation.
+- Add manual quality checklist.
+- Validate Release build.
+
+Exit criteria:
+
+- Build succeeds in Release configuration.
+- Known limitations are documented.
+- The project is ready to move toward release preparation.
 
 ## Reporting Template
 
@@ -181,6 +202,6 @@ Each completed phase should report:
 
 ## Current Baseline
 
-The repository currently starts from the default SwiftUI macOS template. The
-first engineering task is phase 1, with no product settings UI and no character
-management.
+The repository is now a menu bar click-effect utility on `develop`. Character
+reaction and status-item identity work from the earlier direction has been
+removed from the active product scope.
