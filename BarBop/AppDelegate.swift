@@ -10,6 +10,7 @@ import OSLog
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let logger = Logger(subsystem: "io.github.hsc03.BarBop", category: "StatusItemResolver")
+    private let environment = AppEnvironment.shared
     private let statusItemResolver = StatusItemResolver()
     private let overlayWindowController = OverlayWindowController()
     private lazy var reactionCoordinator = ReactionCoordinator(renderer: overlayWindowController)
@@ -49,7 +50,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        logStatusItemResolution(statusItemResolver.resolve(at: click.location))
+        let resolution = statusItemResolver.resolve(at: click.location)
+        logStatusItemResolution(resolution)
+        environment.assignmentStore.recordDetectedItem(DetectedStatusItem(resolution: resolution))
+
+        guard environment.assignmentStore.settings.isEnabled else {
+            return
+        }
+
         reactionCoordinator.handleMenuBarClick(click)
     }
 
