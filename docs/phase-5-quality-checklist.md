@@ -18,6 +18,7 @@ Branch: `develop`
 
 - [ ] BarBop launches as a menu bar utility.
 - [ ] BarBop's own menu bar item opens its menu.
+- [ ] BarBop's own menu bar menu opens Settings.
 - [ ] Quit BarBop exits the app.
 - [ ] Menu bar clicks trigger a visual effect when effects are enabled.
 - [ ] Menu bar clicks do not trigger a visual effect when effects are disabled.
@@ -30,6 +31,7 @@ Branch: `develop`
 ## Settings Checks
 
 - [ ] Color changes are reflected on the next effect.
+- [ ] Style changes are reflected on the next effect.
 - [ ] Opacity changes are reflected on the next effect.
 - [ ] Duration changes are reflected on the next effect.
 - [ ] Flash plays without horizontal movement.

@@ -11,6 +11,8 @@ Phase 3 validates settings UI, local persistence, and settings recovery.
 ## Required Checks
 
 - [ ] Settings window opens from the app's menu bar item.
+- [ ] Settings window exposes color selection.
+- [ ] Settings window exposes effect style selection.
 - [ ] Turning effects off stops future menu bar click effects.
 - [ ] Turning effects back on resumes menu bar click effects.
 - [ ] Color changes apply on the next effect.
