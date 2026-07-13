@@ -365,13 +365,13 @@ struct EffectSettings: Codable, Equatable {
 
 작업:
 
-- Release 빌드 스크립트 작성
+- Release 빌드 스크립트 작성: `scripts/build-release.sh`
 - 앱 버전 및 빌드 번호 정리
-- Developer ID 서명 절차 문서화
-- Apple 공증 및 stapling 절차 문서화
-- DMG 또는 zip 배포 형식 결정
+- Developer ID 서명 절차 문서화: `docs/release-process.md`
+- Apple 공증 및 stapling 절차 문서화: `docs/release-process.md`
+- 초기 배포 형식은 zip으로 결정
 - SHA-256 체크섬 생성
-- GitHub Release 작성 절차 정리
+- GitHub Release 작성 절차 정리: `docs/release-process.md`
 - 인증 정보는 저장소에 기록하지 않고 환경 변수 또는 Keychain profile로만 사용
 
 완료 조건:
