@@ -74,4 +74,69 @@ struct BarBopTests {
         #expect(origin == CGPoint(x: 1360, y: 820))
     }
 
+    @Test func identityPrefersBundleAndAccessibilityIdentifier() {
+        let id = StatusItemIdentity.makeID(
+            from: StatusItemIdentityInput(
+                bundleIdentifier: "com.example.MenuApp",
+                accessibilityIdentifier: "status.clock",
+                title: "Clock",
+                processIdentifier: 101
+            )
+        )
+
+        #expect(id == "bundle:com.example.MenuApp|axid:status.clock")
+    }
+
+    @Test func identityFallsBackToBundleAndTitle() {
+        let id = StatusItemIdentity.makeID(
+            from: StatusItemIdentityInput(
+                bundleIdentifier: "com.example.MenuApp",
+                accessibilityIdentifier: nil,
+                title: "Clock",
+                processIdentifier: 101
+            )
+        )
+
+        #expect(id == "bundle:com.example.MenuApp|title:Clock")
+    }
+
+    @Test func identityUsesSystemPidWhenSystemItemHasNoStableText() {
+        let id = StatusItemIdentity.makeID(
+            from: StatusItemIdentityInput(
+                bundleIdentifier: "com.apple.controlcenter",
+                accessibilityIdentifier: nil,
+                title: nil,
+                processIdentifier: 202
+            )
+        )
+
+        #expect(id == "system:com.apple.controlcenter|pid:202")
+    }
+
+    @Test func identityFallsBackToBundleOnly() {
+        let id = StatusItemIdentity.makeID(
+            from: StatusItemIdentityInput(
+                bundleIdentifier: "com.example.MenuApp",
+                accessibilityIdentifier: nil,
+                title: nil,
+                processIdentifier: 101
+            )
+        )
+
+        #expect(id == "bundle:com.example.MenuApp")
+    }
+
+    @Test func identityUsesUnknownWhenNoStableInputsExist() {
+        let id = StatusItemIdentity.makeID(
+            from: StatusItemIdentityInput(
+                bundleIdentifier: nil,
+                accessibilityIdentifier: nil,
+                title: "   ",
+                processIdentifier: 101
+            )
+        )
+
+        #expect(id == StatusItemIdentity.unknown)
+    }
+
 }
