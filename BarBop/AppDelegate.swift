@@ -10,8 +10,9 @@ import OSLog
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let logger = Logger(subsystem: "io.github.hsc03.BarBop", category: "StatusItemResolver")
-    private let overlayController = PrototypeOverlayWindowController()
     private let statusItemResolver = StatusItemResolver()
+    private let overlayWindowController = OverlayWindowController()
+    private lazy var reactionCoordinator = ReactionCoordinator(renderer: overlayWindowController)
     private lazy var eventMonitor = MenuBarEventMonitor { [weak self] click in
         self?.handleMenuBarClick(click)
     }
@@ -26,7 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         eventMonitor.stop()
-        overlayController.hide()
+        overlayWindowController.hide()
     }
 
     private func configureStatusItem() {
@@ -49,7 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         logStatusItemResolution(statusItemResolver.resolve(at: click.location))
-        overlayController.show(at: click.location, on: click.screen)
+        reactionCoordinator.handleMenuBarClick(click)
     }
 
     private func logStatusItemResolution(_ resolution: StatusItemResolution) {

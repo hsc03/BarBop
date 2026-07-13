@@ -1,22 +1,25 @@
 //
-//  PrototypeOverlayWindowController.swift
+//  OverlayWindowController.swift
 //  BarBop
 //
-//  Created by Codex on 7/7/26.
+//  Created by Codex on 7/13/26.
 //
 
 import AppKit
 
-final class PrototypeOverlayWindowController {
-    private let overlaySize = CGSize(width: 72, height: 72)
+final class OverlayWindowController: ReactionRendering {
+    private let overlaySize = CGSize(width: 96, height: 96)
     private var panel: NSPanel?
+    private var renderer: CharacterRenderer?
     private var hideWorkItem: DispatchWorkItem?
 
-    func show(at location: CGPoint, on screen: ScreenGeometry) {
-        hideWorkItem?.cancel()
+    func playReaction(at location: CGPoint, on screen: ScreenGeometry, motionMode: ReactionMotionMode) {
+        cancelCurrentReaction()
 
         let panel = panel ?? makePanel()
+        let renderer = renderer ?? CharacterRenderer(frame: CGRect(origin: .zero, size: overlaySize))
         self.panel = panel
+        self.renderer = renderer
 
         let origin = MenuBarGeometry.clampedOverlayOrigin(
             centeredAt: location,
@@ -24,15 +27,29 @@ final class PrototypeOverlayWindowController {
             screenFrame: screen.frame
         )
 
+        renderer.frame = CGRect(origin: .zero, size: overlaySize)
+        renderer.resetForPlayback()
+        panel.contentView = renderer
         panel.setFrame(CGRect(origin: origin, size: overlaySize), display: true)
         panel.alphaValue = 1
         panel.orderFrontRegardless()
+
+        renderer.play(motionMode: motionMode) { [weak self] in
+            self?.hide()
+        }
 
         let workItem = DispatchWorkItem { [weak self] in
             self?.hide()
         }
         hideWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: workItem)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9, execute: workItem)
+    }
+
+    func cancelCurrentReaction() {
+        hideWorkItem?.cancel()
+        hideWorkItem = nil
+        renderer?.stop()
+        panel?.orderOut(nil)
     }
 
     func hide() {
@@ -56,23 +73,7 @@ final class PrototypeOverlayWindowController {
         panel.hidesOnDeactivate = false
         panel.level = .statusBar
         panel.collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
-        panel.contentView = RedCircleView(frame: CGRect(origin: .zero, size: overlaySize))
 
         return panel
-    }
-}
-
-private final class RedCircleView: NSView {
-    override var isOpaque: Bool {
-        false
-    }
-
-    override func draw(_ dirtyRect: NSRect) {
-        NSColor.clear.setFill()
-        dirtyRect.fill()
-
-        let circleRect = bounds.insetBy(dx: 10, dy: 10)
-        NSColor.systemRed.withAlphaComponent(0.9).setFill()
-        NSBezierPath(ovalIn: circleRect).fill()
     }
 }
