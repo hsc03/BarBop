@@ -13,6 +13,7 @@ struct EffectSettings: Codable, Equatable {
         case flash
         case pulse
         case sweep
+        case aurora
 
         var id: String { rawValue }
     }

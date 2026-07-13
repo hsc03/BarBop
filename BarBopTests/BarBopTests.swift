@@ -81,6 +81,10 @@ struct BarBopTests {
         #expect(store.settings == EffectSettings.defaults)
     }
 
+    @Test func effectStylesIncludeAurora() {
+        #expect(EffectSettings.Style.allCases == [.flash, .pulse, .sweep, .aurora])
+    }
+
     @Test func effectSettingsStorePersistsSettings() {
         let suiteName = uniqueSuiteName()
         let userDefaults = UserDefaults(suiteName: suiteName)!

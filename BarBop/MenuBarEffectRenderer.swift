@@ -9,7 +9,7 @@ import AppKit
 import QuartzCore
 
 final class MenuBarEffectRenderer: NSView {
-    private let effectLayer = CALayer()
+    private var effectLayer = CALayer()
     private var completionWorkItem: DispatchWorkItem?
 
     override init(frame frameRect: NSRect) {
@@ -38,8 +38,7 @@ final class MenuBarEffectRenderer: NSView {
     func play(settings: EffectSettings, reduceMotion: Bool, completion: @escaping () -> Void) {
         stop()
 
-        let color = settings.color.nsColor.withAlphaComponent(settings.opacity)
-        effectLayer.backgroundColor = color.cgColor
+        configureSolidLayer(color: settings.color.nsColor.withAlphaComponent(settings.opacity))
         effectLayer.opacity = 0
         effectLayer.frame = bounds
 
@@ -53,6 +52,8 @@ final class MenuBarEffectRenderer: NSView {
                 playPulse(duration: settings.duration, completion: completion)
             case .sweep:
                 playSweep(duration: settings.duration, completion: completion)
+            case .aurora:
+                playAurora(settings: settings, completion: completion)
             }
         }
     }
@@ -136,6 +137,70 @@ final class MenuBarEffectRenderer: NSView {
         opacity.isRemovedOnCompletion = false
 
         playGroup(animations: [position, opacity], duration: duration, completion: completion)
+    }
+
+    private func playAurora(settings: EffectSettings, completion: @escaping () -> Void) {
+        let gradientLayer = CAGradientLayer()
+        gradientLayer.frame = bounds.insetBy(dx: -bounds.width * 0.4, dy: 0)
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0.5)
+        gradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
+        gradientLayer.colors = auroraColors(from: settings.color.nsColor, opacity: settings.opacity)
+        gradientLayer.locations = [0, 0.22, 0.46, 0.72, 1]
+        gradientLayer.opacity = 0
+
+        replaceEffectLayer(with: gradientLayer)
+
+        let position = CABasicAnimation(keyPath: "position.x")
+        position.fromValue = bounds.midX - bounds.width * 0.22
+        position.toValue = bounds.midX + bounds.width * 0.22
+        position.duration = settings.duration
+        position.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        position.fillMode = .forwards
+        position.isRemovedOnCompletion = false
+
+        let opacity = CAKeyframeAnimation(keyPath: "opacity")
+        opacity.values = [0, 1, 0.85, 0]
+        opacity.keyTimes = [0, 0.18, 0.72, 1]
+        opacity.duration = settings.duration
+        opacity.timingFunctions = [
+            CAMediaTimingFunction(name: .easeOut),
+            CAMediaTimingFunction(name: .easeInEaseOut),
+            CAMediaTimingFunction(name: .easeIn)
+        ]
+        opacity.fillMode = .forwards
+        opacity.isRemovedOnCompletion = false
+
+        playGroup(animations: [position, opacity], duration: settings.duration, completion: completion)
+    }
+
+    private func configureSolidLayer(color: NSColor) {
+        if type(of: effectLayer) != CALayer.self {
+            replaceEffectLayer(with: CALayer())
+        }
+
+        effectLayer.backgroundColor = color.cgColor
+    }
+
+    private func replaceEffectLayer(with layer: CALayer) {
+        effectLayer.removeAllAnimations()
+        effectLayer.removeFromSuperlayer()
+        effectLayer = layer
+        self.layer?.addSublayer(effectLayer)
+    }
+
+    private func auroraColors(from baseColor: NSColor, opacity: Double) -> [CGColor] {
+        let base = baseColor.usingColorSpace(.sRGB) ?? .controlAccentColor
+        let colors = [
+            base.blended(withFraction: 0.55, of: .systemPurple) ?? base,
+            base.blended(withFraction: 0.45, of: .systemBlue) ?? base,
+            base.blended(withFraction: 0.35, of: .systemTeal) ?? base,
+            base.blended(withFraction: 0.45, of: .systemPink) ?? base,
+            base.blended(withFraction: 0.55, of: .systemIndigo) ?? base
+        ]
+
+        return colors.map { color in
+            color.withAlphaComponent(opacity).cgColor
+        }
     }
 
     private func playGroup(animations: [CAAnimation], duration: TimeInterval, completion: @escaping () -> Void) {

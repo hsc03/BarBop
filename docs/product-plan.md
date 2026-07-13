@@ -129,6 +129,14 @@ MVP 이후 추가한다.
 
 MVP 이후 추가한다.
 
+### Aurora
+
+설정 색상을 중심으로 여러 보조 색상을 만든 뒤, 메뉴바 전체에 부드러운 그라디언트가 짧게 흐르는 효과다.
+
+특정 브랜드의 고유 시각 표현을 참조하지 않고 BarBop 고유의 추상적인 빛 효과로 구현한다.
+
+MVP 이후 추가한다.
+
 ### Reduce Motion
 
 시스템 Reduce Motion이 활성화되어 있으면 이동 애니메이션을 사용하지 않고 짧은 페이드만 사용한다.
@@ -141,7 +149,7 @@ MVP 이후 추가한다.
 | 색상 | CodableColor | systemAccentColor | 효과 색상 |
 | 투명도 | Double | 0.35 | 0.05~1.0 범위 |
 | 지속시간 | Double | 0.28 | 초 단위, 0.1~1.0 범위 |
-| 스타일 | EffectStyle | flash | Flash, Pulse, Sweep |
+| 스타일 | EffectStyle | flash | Flash, Pulse, Sweep, Aurora |
 
 색상 저장은 `NSColor`를 직접 Codable로 저장하지 않고, 별도 `CodableColor` 값을 둔다.
 
@@ -177,7 +185,7 @@ MVP 이후 추가한다.
 ### MenuBarEffectRenderer
 
 - 실제 색상 효과를 그린다.
-- Flash, Pulse, Sweep 효과를 담당한다.
+- Flash, Pulse, Sweep, Aurora 효과를 담당한다.
 - Reduce Motion이면 단순 페이드만 수행한다.
 - 효과 재생이 끝나면 completion을 호출한다.
 
@@ -208,6 +216,7 @@ struct EffectSettings: Codable, Equatable {
         case flash
         case pulse
         case sweep
+        case aurora
 
         var id: String { rawValue }
     }
@@ -326,11 +335,12 @@ struct EffectSettings: Codable, Equatable {
 
 - Pulse 구현
 - Sweep 구현
+- Aurora 구현
 - Reduce Motion 대응 정리
 
 완료 조건:
 
-- Flash, Pulse, Sweep 모두 동작
+- Flash, Pulse, Sweep, Aurora 모두 동작
 - Reduce Motion에서는 이동 효과 없이 단순 페이드만 표시
 
 ### 단계 5: 품질 정리

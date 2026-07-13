@@ -139,6 +139,8 @@ struct ContentView: View {
             return "Pulse"
         case .sweep:
             return "Sweep"
+        case .aurora:
+            return "Aurora"
         }
     }
 }
