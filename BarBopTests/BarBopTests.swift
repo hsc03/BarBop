@@ -139,4 +139,69 @@ struct BarBopTests {
         #expect(id == StatusItemIdentity.unknown)
     }
 
+    @Test func reactionCoordinatorUsesFullMotionByDefault() {
+        let renderer = FakeReactionRenderer()
+        let coordinator = ReactionCoordinator(renderer: renderer, reduceMotionProvider: { false })
+        let click = MenuBarClick(location: CGPoint(x: 10, y: 20), screen: sampleScreen)
+
+        coordinator.handleMenuBarClick(click)
+
+        #expect(renderer.cancelCount == 1)
+        #expect(renderer.playedReactions == [
+            FakeReaction(location: CGPoint(x: 10, y: 20), screen: sampleScreen, motionMode: .fullMotion)
+        ])
+    }
+
+    @Test func reactionCoordinatorUsesReducedMotionWhenRequested() {
+        let renderer = FakeReactionRenderer()
+        let coordinator = ReactionCoordinator(renderer: renderer, reduceMotionProvider: { true })
+        let click = MenuBarClick(location: CGPoint(x: 12, y: 24), screen: sampleScreen)
+
+        coordinator.handleMenuBarClick(click)
+
+        #expect(renderer.cancelCount == 1)
+        #expect(renderer.playedReactions == [
+            FakeReaction(location: CGPoint(x: 12, y: 24), screen: sampleScreen, motionMode: .reducedMotion)
+        ])
+    }
+
+    @Test func reactionCoordinatorCancelsBeforeEveryReaction() {
+        let renderer = FakeReactionRenderer()
+        let coordinator = ReactionCoordinator(renderer: renderer, reduceMotionProvider: { false })
+
+        coordinator.handleMenuBarClick(MenuBarClick(location: CGPoint(x: 10, y: 20), screen: sampleScreen))
+        coordinator.handleMenuBarClick(MenuBarClick(location: CGPoint(x: 30, y: 40), screen: sampleScreen))
+
+        #expect(renderer.cancelCount == 2)
+        #expect(renderer.playedReactions.count == 2)
+        #expect(renderer.playedReactions.last?.location == CGPoint(x: 30, y: 40))
+    }
+
+    private var sampleScreen: ScreenGeometry {
+        ScreenGeometry(
+            id: 1,
+            frame: CGRect(x: 0, y: 0, width: 1440, height: 900),
+            visibleFrame: CGRect(x: 0, y: 0, width: 1440, height: 875)
+        )
+    }
+
+}
+
+private struct FakeReaction: Equatable {
+    let location: CGPoint
+    let screen: ScreenGeometry
+    let motionMode: ReactionMotionMode
+}
+
+private final class FakeReactionRenderer: ReactionRendering {
+    var cancelCount = 0
+    var playedReactions: [FakeReaction] = []
+
+    func cancelCurrentReaction() {
+        cancelCount += 1
+    }
+
+    func playReaction(at location: CGPoint, on screen: ScreenGeometry, motionMode: ReactionMotionMode) {
+        playedReactions.append(FakeReaction(location: location, screen: screen, motionMode: motionMode))
+    }
 }
