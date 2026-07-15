@@ -16,8 +16,8 @@ displays; BarBop does not read notification content.
 
 ## Current Feature Set
 
-- Menu bar status item with Settings and Quit actions.
-- First-launch Settings guidance and click-monitor status.
+- Menu bar status item with an attached settings popover and Quit action.
+- First-launch settings popover guidance and click-monitor status.
 - Independent Click Effects and Notification Effects toggles.
 - Flash, Pulse, Sweep, and three-color Aurora styles.
 - Blue default color, dedicated opacity control, and persistent settings.
@@ -33,7 +33,7 @@ displays; BarBop does not read notification content.
 
 | Component | Responsibility |
 |---|---|
-| `AppDelegate` / `AppEnvironment` | Lifecycle, status item, settings window, and service wiring |
+| `AppDelegate` / `AppEnvironment` | Lifecycle, status item, attached settings popover, and service wiring |
 | `EffectSettingsStore` | Versioned local persistence and migration |
 | `MenuBarEventMonitor` | Global and local mouse monitoring |
 | `NotificationBannerDetector` | Public AX observation, structural filtering, deduplication, and diagnostics |

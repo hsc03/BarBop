@@ -8,8 +8,8 @@ bar area, and shows a temporary click-through overlay on the clicked display.
 ## Current Features
 
 - Menu bar click detection
-- First-launch Settings guidance
-- Click monitoring status in Settings
+- First-launch settings popover guidance
+- Click monitoring status in the menu bar popover
 - Click-through menu bar overlay
 - Multi-display menu bar targeting
 - Effect enable/disable setting
@@ -53,12 +53,14 @@ blocked by CoreSimulator or test manager permissions in some environments.
 verify Notification Center's public Accessibility structure. It is not bundled
 in the BarBop application or included in release ZIP files.
 
-On the first launch, BarBop opens Settings once so the effect controls and
-click monitoring status are visible. The status reports whether BarBop created
+On the first launch, BarBop opens its settings popover from the menu bar item
+once so the effect controls and click monitoring status are visible. Later,
+clicking the BarBop menu bar item toggles the same attached popover; no separate
+settings window is created. The status reports whether BarBop created
 its system-wide mouse event monitor; it does not claim that a particular macOS
 privacy permission has been granted. BarBop does not monitor keyboard events.
 
-The Settings window can send a fixed local test notification after the user
+The settings popover can send a fixed local test notification after the user
 grants macOS notification permission. This diagnostic action does not enable
 notification effects, change effect settings, or use the network.
 

@@ -16,11 +16,12 @@ Branch: `develop`
 
 ## Manual App Checks
 
-- [ ] On a clean first launch, Settings opens automatically once.
-- [ ] On later launches, Settings does not open automatically.
+- [ ] On a clean first launch, the menu bar settings popover opens automatically once.
+- [ ] On later launches, the settings popover does not open automatically.
 - [ ] BarBop launches as a menu bar utility.
-- [ ] BarBop's own menu bar item opens its menu.
-- [ ] BarBop's own menu bar menu opens Settings.
+- [ ] BarBop's own menu bar item toggles its attached settings popover.
+- [ ] The settings UI does not create a separate app window.
+- [ ] Clicking outside the transient popover closes it without quitting BarBop.
 - [ ] Quit BarBop exits the app.
 - [ ] Menu bar clicks trigger a visual effect when effects are enabled.
 - [ ] Menu bar clicks do not trigger a visual effect when effects are disabled.

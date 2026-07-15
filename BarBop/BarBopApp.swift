@@ -13,7 +13,10 @@ struct BarBopApp: App {
 
     var body: some Scene {
         Settings {
-            ContentView()
+            EmptyView()
+        }
+        .commands {
+            CommandGroup(replacing: .appSettings) { }
         }
     }
 }

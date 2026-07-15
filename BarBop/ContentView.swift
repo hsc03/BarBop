@@ -20,8 +20,9 @@ struct ContentView: View {
             monitoringStatus
             controls
             Spacer()
+            footer
         }
-        .frame(minWidth: 560, minHeight: 390, alignment: .topLeading)
+        .frame(minWidth: 560, minHeight: 620, alignment: .topLeading)
         .padding(20)
         .task {
             reload()
@@ -63,6 +64,21 @@ struct ContentView: View {
                 .fontWeight(.semibold)
             Text("Adds a short click-through color effect when you click the macOS menu bar.")
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private var footer: some View {
+        VStack(spacing: 12) {
+            Divider()
+            HStack {
+                Text("Changes are saved automatically.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Quit BarBop") {
+                    NSApp.terminate(nil)
+                }
+            }
         }
     }
 

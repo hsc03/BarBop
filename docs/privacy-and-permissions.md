@@ -10,7 +10,7 @@ BarBop observes mouse down events so it can determine whether a click happened
 inside a menu bar area. The app uses the current pointer location and the
 visible screen geometry to decide whether an effect should play.
 
-BarBop does not observe keyboard events. The Settings window shows whether the
+BarBop does not observe keyboard events. The menu bar settings popover shows whether the
 system-wide mouse event monitor was created successfully. This is an
 operational status, not a claim that a specific macOS privacy permission has
 been granted.
@@ -54,7 +54,7 @@ BarBop does not collect or store:
 
 BarBop does not make network requests.
 
-The Settings window can ask macOS to display one fixed local BarBop test
+The settings popover can ask macOS to display one fixed local BarBop test
 notification. Its title and body are generated on the Mac, are not derived from
 user data, and are not transmitted over the network. Sending a test notification
 does not enable notification-triggered effects.
@@ -67,7 +67,7 @@ may need to approve the app in System Settings.
 
 BarBop must continue to behave safely when permission is missing:
 
-- The settings window should remain usable.
+- The settings popover should remain usable.
 - The app should not crash.
 - The app should not attempt private APIs or event injection as a workaround.
 

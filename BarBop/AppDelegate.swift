@@ -21,7 +21,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     )
 
     private var statusItem: NSStatusItem?
-    private var settingsWindowController: NSWindowController?
+    private lazy var settingsPopover: NSPopover = makeSettingsPopover()
+    private var initialPresentationAttempts = 0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -30,9 +31,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         eventMonitor.start()
         environment.notificationEffectController.restoreSavedState()
 
-        if environment.firstLaunchStore.shouldPresentInitialSettings {
-            openSettings()
-            environment.firstLaunchStore.markInitialSettingsPresented()
+        DispatchQueue.main.async { [weak self] in
+            self?.presentInitialSettingsIfNeeded()
         }
     }
 
@@ -52,16 +52,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     private func configureStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = makeStatusItemImage()
-        item.button?.toolTip = "BarBop"
-
-        let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "BarBop", action: nil, keyEquivalent: ""))
-        menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ","))
-        menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Quit BarBop", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-        item.menu = menu
+        if let button = item.button {
+            button.image = makeStatusItemImage()
+            button.toolTip = "BarBop Settings"
+            button.target = self
+            button.action = #selector(toggleSettingsPopover(_:))
+            button.sendAction(on: [.leftMouseUp])
+        }
 
         statusItem = item
     }
@@ -75,25 +72,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         return image
     }
 
-    @objc private func openSettings() {
-        let controller = settingsWindowController ?? makeSettingsWindowController()
-        settingsWindowController = controller
-
-        NSApp.activate(ignoringOtherApps: true)
-        controller.window?.makeKeyAndOrderFront(nil)
+    @objc private func toggleSettingsPopover(_ sender: Any?) {
+        if settingsPopover.isShown {
+            settingsPopover.performClose(sender)
+        } else {
+            _ = showSettingsPopover()
+        }
     }
 
-    private func makeSettingsWindowController() -> NSWindowController {
-        let hostingController = NSHostingController(rootView: ContentView())
-        let window = NSWindow(contentViewController: hostingController)
-        window.title = "BarBop Settings"
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-        window.setContentSize(NSSize(width: 700, height: 700))
-        window.minSize = NSSize(width: 640, height: 600)
-        window.isReleasedWhenClosed = false
-        window.center()
+    private func presentInitialSettingsIfNeeded() {
+        guard environment.firstLaunchStore.shouldPresentInitialSettings else {
+            return
+        }
 
-        return NSWindowController(window: window)
+        initialPresentationAttempts += 1
+        guard showSettingsPopover() else {
+            guard initialPresentationAttempts < 10 else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.presentInitialSettingsIfNeeded()
+            }
+            return
+        }
+
+        environment.firstLaunchStore.markInitialSettingsPresented()
+    }
+
+    @discardableResult
+    private func showSettingsPopover() -> Bool {
+        guard let button = statusItem?.button else { return false }
+
+        NSApp.activate(ignoringOtherApps: true)
+        settingsPopover.show(
+            relativeTo: button.bounds,
+            of: button,
+            preferredEdge: .minY
+        )
+        return settingsPopover.isShown
+    }
+
+    private func makeSettingsPopover() -> NSPopover {
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.animates = true
+        popover.contentSize = NSSize(width: 640, height: 700)
+        popover.contentViewController = NSHostingController(rootView: ContentView())
+        return popover
     }
 
     private func handleMenuBarClick(_ click: MenuBarClick) {
