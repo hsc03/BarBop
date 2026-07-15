@@ -36,6 +36,12 @@ itself exits unsuccessfully.
   each banner produced one effect on all three connected displays with no
   duplicate or residual panel. Synthetic Computer Use clicks were excluded
   because macOS did not visibly deliver those automated attempts.
+- A clean product-only cold start was also confirmed after removing stale TCC
+  entries and granting Accessibility to the fixed-path BarBop build. BarBop
+  restored Notification Effects as Active without a preceding ordinary menu
+  bar click, displayed the local banner, and replayed the saved yellow Flash
+  effect on all three displays. The development spike was not running, so its
+  fixed cyan effect could not mask this result.
 - The 520x520 settings popover, Effects/Notifications tabs, fixed header and
   footer, scrollable content, collapsed Troubleshooting section, single compact
   color picker, and three-well Aurora editor were interactively confirmed.
@@ -47,9 +53,12 @@ itself exits unsuccessfully.
 
 ## Pending Manual Release Gates
 
-- Reset spike detector metrics and independently confirm that the same five
-  local banners produce exactly five filtered detections. The product-side
-  visual result is already 5/5 with one effect per banner.
+- Independently confirm an isolated five-request spike run produces exactly
+  five filtered detections. A reset run made approximately five requests but
+  recorded six distinct banners (24 callbacks, 6 candidates, 6 detections,
+  0 duplicates, 24 ms average and 67 ms maximum latency) because an earlier
+  macOS-delayed local notification was delivered in the same run. This is not
+  counted as an exact 5/5 detector sample.
 - Verify at least 19 of 20 visible external-app banners with one effect each.
 - Verify follow, main, specific, and all-display modes using at least two
   displays, including disconnection and reconnection.

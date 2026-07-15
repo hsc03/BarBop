@@ -1,6 +1,6 @@
 # Notification Trigger Spike Report
 
-Date: 2026-07-14
+Date: 2026-07-15
 
 Status: Integration validated; release reliability validation pending
 
@@ -105,7 +105,7 @@ ancestor chain. Rejected callbacks remain visible without reading content.
 | Sleep and wake | 3 cycles | Observer reconnects | Pending | Pending |
 | Notification Center process restart | 3 cycles | Observer reconnects | Pending | Pending |
 | Detection-to-effect latency | 20 | Maximum 500 ms | Pending | Pending |
-| BarBop local test banners | 5 | 5 visible banners, each detected exactly once | Product-side visual run passed 5/5 at manual two-second intervals; each produced one effect on all three displays with no residual panel. Earlier spike metrics were cumulative at 9 candidates / 9 detections / 0 duplicates. | Visual pass; isolated reset-and-5 spike count pending |
+| BarBop local test banners | 5 | 5 visible banners, each detected exactly once | The product-side visual run passed 5/5 at manual two-second intervals with one effect on all three displays and no residual panel. A later product-only cold start passed after stale TCC entries were reset: the saved yellow Flash effect appeared on all three displays without a preceding ordinary menu bar click. The isolated spike rerun was not countable: approximately five requests produced 6 distinct candidates / 6 detections / 0 duplicates because macOS delivered an earlier delayed local request in the same run; average latency was 24 ms and maximum latency was 67 ms. | Product visual pass; exact isolated 5/5 spike count pending |
 | Sandbox observer attachment | 1 connection | Permission granted and observer active | BarBop did not appear in Accessibility | Failed |
 | Sandbox visible banners | 5 | 5 detected, one effect each | Could not start because permission registration failed | Failed |
 
@@ -121,8 +121,11 @@ display IDs. Do not paste notification content into this report.
 - Observed banner role/subrole: `AXGroup/AXNotificationCenterBanner`
 - Accepted parent depth: `0` (the callback element itself)
 - Typical observed banner frames: height `73`, widths approximately `344–577`
-- Latest filtered diagnostic: 9 candidates, 9 detections, 0 duplicates,
-  50 ms average effect latency, 66 ms maximum effect latency
+- Latest reset diagnostic: 6 candidates, 6 detections, 0 duplicates,
+  24 ms average effect latency, 67 ms maximum effect latency. The user made
+  approximately five requests, so the run is retained as latency and structure
+  evidence but not counted as the exact five-banner sample; a previously
+  delayed local notification was delivered after the reset.
 - Rejected structural callbacks included full-screen
   `AXWindow/AXSystemDialog` roots and `AXScrollArea` roots containing the banner
   as a descendant. Restricting acceptance to the banner callback root removes
