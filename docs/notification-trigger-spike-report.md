@@ -105,7 +105,7 @@ ancestor chain. Rejected callbacks remain visible without reading content.
 | Sleep and wake | 3 cycles | Observer reconnects | Pending | Pending |
 | Notification Center process restart | 3 cycles | Observer reconnects | Pending | Pending |
 | Detection-to-effect latency | 20 | Maximum 500 ms | Pending | Pending |
-| BarBop local test banners | 5 | 5 visible banners, each detected exactly once | User confirmed 5 visible banners; filtered counter was cumulative at 9 candidates / 9 detections / 0 duplicates | Isolated reset-and-5 count still pending |
+| BarBop local test banners | 5 | 5 visible banners, each detected exactly once | Product-side visual run passed 5/5 at manual two-second intervals; each produced one effect on all three displays with no residual panel. Earlier spike metrics were cumulative at 9 candidates / 9 detections / 0 duplicates. | Visual pass; isolated reset-and-5 spike count pending |
 | Sandbox observer attachment | 1 connection | Permission granted and observer active | BarBop did not appear in Accessibility | Failed |
 | Sandbox visible banners | 5 | 5 detected, one effect each | Could not start because permission registration failed | Failed |
 

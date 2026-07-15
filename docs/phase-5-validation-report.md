@@ -32,7 +32,14 @@ itself exits unsuccessfully.
 - BarBop local test notifications display after notification permission is
   granted.
 - Five local test banners were visually confirmed in the current desktop
-  session.
+  session. The user sent them manually at approximately two-second intervals;
+  each banner produced one effect on all three connected displays with no
+  duplicate or residual panel. Synthetic Computer Use clicks were excluded
+  because macOS did not visibly deliver those automated attempts.
+- The 520x520 settings popover, Effects/Notifications tabs, fixed header and
+  footer, scrollable content, collapsed Troubleshooting section, single compact
+  color picker, and three-well Aurora editor were interactively confirmed.
+- Clicking outside the transient popover closed it without terminating BarBop.
 - The non-Sandbox spike can register as an Accessibility client and observe the
   confirmed `AXGroup/AXNotificationCenterBanner` structure.
 - The Sandbox comparison could not register BarBop as an Accessibility client,
@@ -40,8 +47,9 @@ itself exits unsuccessfully.
 
 ## Pending Manual Release Gates
 
-- Reset detector metrics and verify five local test banners produce exactly
-  five detections and five effects.
+- Reset spike detector metrics and independently confirm that the same five
+  local banners produce exactly five filtered detections. The product-side
+  visual result is already 5/5 with one effect per banner.
 - Verify at least 19 of 20 visible external-app banners with one effect each.
 - Verify follow, main, specific, and all-display modes using at least two
   displays, including disconnection and reconnection.
