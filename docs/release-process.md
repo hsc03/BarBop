@@ -159,3 +159,8 @@ After the GitHub Release is published, the Homebrew Cask step needs:
 - App bundle name
 - Minimum supported macOS version
 - Uninstall and zap behavior
+
+The first Homebrew distribution will use the separate public personal tap
+`hsc03/homebrew-tap`. Follow `docs/personal-homebrew-tap.md` for the repository
+layout, Cask template, validation commands, update policy, and completion
+criteria.

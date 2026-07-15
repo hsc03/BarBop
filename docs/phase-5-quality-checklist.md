@@ -16,6 +16,8 @@ Branch: `develop`
 
 ## Manual App Checks
 
+- [ ] On a clean first launch, Settings opens automatically once.
+- [ ] On later launches, Settings does not open automatically.
 - [ ] BarBop launches as a menu bar utility.
 - [ ] BarBop's own menu bar item opens its menu.
 - [ ] BarBop's own menu bar menu opens Settings.
@@ -30,6 +32,10 @@ Branch: `develop`
 
 ## Settings Checks
 
+- [ ] Settings reports Click Monitoring as Active while the global mouse
+      monitor is installed.
+- [ ] The monitoring explanation says that keyboard input and click history
+      are not collected.
 - [ ] Color changes are reflected on the next effect.
 - [ ] Style changes are reflected on the next effect.
 - [ ] Opacity changes are reflected on the next effect.
@@ -41,6 +47,27 @@ Branch: `develop`
 - [ ] Reduce Motion simplifies moving effects to a short fade.
 - [ ] Settings persist after quitting and relaunching the app.
 - [ ] Invalid stored settings recover to defaults without crashing.
+- [ ] Click Effects and Notification Effects can be enabled independently.
+- [ ] Without Accessibility approval, enabling Notification Effects returns
+      the toggle to off and shows the System Settings guidance.
+- [ ] After Accessibility approval and returning to BarBop, the pending
+      Notification Effects request enables automatically and reports an active
+      observer.
+- [ ] A visible test notification plays the currently selected solid or
+      Aurora colors, opacity, duration, and style on the banner's display.
+- [ ] A notification does not trigger an effect when Notification Effects is
+      off, and sending a test notification does not change either toggle.
+- [ ] Follow Notification targets the display reported by the visible banner.
+- [ ] Main Display always targets the current macOS main display.
+- [ ] Each connected display can be selected by name and remains selected after
+      relaunching BarBop.
+- [ ] All Displays plays one simultaneous effect on every connected display.
+- [ ] Disconnecting a specifically selected display shows the fallback notice
+      and uses Main Display; reconnecting it restores the original selection.
+- [ ] Changing the display arrangement refreshes the Display picker without
+      requiring an app restart.
+- [ ] A click effect still appears only on the clicked display regardless of
+      the notification Display setting.
 
 ## Documentation Checks
 
