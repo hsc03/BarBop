@@ -70,7 +70,7 @@ current notification implementation.
 - Developer ID signing, notarization, stapling, and clean-install verification
   have not yet been completed.
 
-See `phase-5-validation-report.md`, `phase-5-quality-checklist.md`, and
+See `release-validation-report.md`, `phase-5-quality-checklist.md`, and
 `notification-trigger-spike-report.md` for the detailed evidence and pending
 matrix.
 

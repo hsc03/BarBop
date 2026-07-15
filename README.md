@@ -88,6 +88,7 @@ display and automatically resumes the selected display when it reconnects.
 - Engineering harness: `docs/engineering-harness.md`
 - Privacy and permissions: `docs/privacy-and-permissions.md`
 - Manual verification: `docs/phase-5-quality-checklist.md`
+- Release validation results: `docs/release-validation-report.md`
 - Personal Homebrew Tap distribution: `docs/personal-homebrew-tap.md`
 
 ## Distribution Goal
