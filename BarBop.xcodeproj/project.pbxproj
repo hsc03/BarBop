@@ -27,6 +27,7 @@
 		AE078F422FFD1B000041EBD1 /* BarBop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BarBop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AE078F4F2FFD1B000041EBD1 /* BarBopTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BarBopTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AE078F592FFD1B000041EBD1 /* BarBopUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BarBopUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B00100010000000000000001 /* NotificationObserverSpike.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NotificationObserverSpike.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -43,6 +44,16 @@
 		AE078F5C2FFD1B000041EBD1 /* BarBopUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = BarBopUITests;
+			sourceTree = "<group>";
+		};
+		B00100020000000000000002 /* NotificationObserverSpike */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = NotificationObserverSpike;
+			sourceTree = "<group>";
+		};
+		C00100010000000000000001 /* NotificationObserverSpikeCore */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = NotificationObserverSpikeCore;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -69,6 +80,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B00100050000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -78,6 +96,8 @@
 				AE078F442FFD1B000041EBD1 /* BarBop */,
 				AE078F522FFD1B000041EBD1 /* BarBopTests */,
 				AE078F5C2FFD1B000041EBD1 /* BarBopUITests */,
+				B00100020000000000000002 /* NotificationObserverSpike */,
+				C00100010000000000000001 /* NotificationObserverSpikeCore */,
 				AE078F432FFD1B000041EBD1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +108,7 @@
 				AE078F422FFD1B000041EBD1 /* BarBop.app */,
 				AE078F4F2FFD1B000041EBD1 /* BarBopTests.xctest */,
 				AE078F592FFD1B000041EBD1 /* BarBopUITests.xctest */,
+				B00100010000000000000001 /* NotificationObserverSpike.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -109,6 +130,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				AE078F442FFD1B000041EBD1 /* BarBop */,
+				C00100010000000000000001 /* NotificationObserverSpikeCore */,
 			);
 			name = BarBop;
 			packageProductDependencies = (
@@ -163,6 +185,29 @@
 			productReference = AE078F592FFD1B000041EBD1 /* BarBopUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		B00100030000000000000003 /* NotificationObserverSpike */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B00100090000000000000009 /* Build configuration list for PBXNativeTarget "NotificationObserverSpike" */;
+			buildPhases = (
+				B00100040000000000000004 /* Sources */,
+				B00100050000000000000005 /* Frameworks */,
+				B00100060000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B00100020000000000000002 /* NotificationObserverSpike */,
+				C00100010000000000000001 /* NotificationObserverSpikeCore */,
+			);
+			name = NotificationObserverSpike;
+			packageProductDependencies = (
+			);
+			productName = NotificationObserverSpike;
+			productReference = B00100010000000000000001 /* NotificationObserverSpike.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +229,9 @@
 						CreatedOnToolsVersion = 26.6;
 						TestTargetID = AE078F412FFD1B000041EBD1;
 					};
+					B00100030000000000000003 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 				};
 			};
 			buildConfigurationList = AE078F3D2FFD1B000041EBD1 /* Build configuration list for PBXProject "BarBop" */;
@@ -203,6 +251,7 @@
 				AE078F412FFD1B000041EBD1 /* BarBop */,
 				AE078F4E2FFD1B000041EBD1 /* BarBopTests */,
 				AE078F582FFD1B000041EBD1 /* BarBopUITests */,
+				B00100030000000000000003 /* NotificationObserverSpike */,
 			);
 		};
 /* End PBXProject section */
@@ -229,6 +278,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B00100060000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -247,6 +303,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AE078F552FFD1B000041EBD1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00100040000000000000004 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -398,7 +461,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = QBLR7WP73X;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -430,7 +493,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = QBLR7WP73X;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -533,6 +596,51 @@
 			};
 			name = Release;
 		};
+		B00100070000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 0.1;
+				OTHER_CODE_SIGN_FLAGS = "--options=runtime";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.hsc03.NotificationObserverSpike;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B00100080000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 0.1;
+				OTHER_CODE_SIGN_FLAGS = "--options=runtime";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.hsc03.NotificationObserverSpike;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -568,6 +676,15 @@
 			buildConfigurations = (
 				AE078F6A2FFD1B010041EBD1 /* Debug */,
 				AE078F6B2FFD1B010041EBD1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B00100090000000000000009 /* Build configuration list for PBXNativeTarget "NotificationObserverSpike" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B00100070000000000000007 /* Debug */,
+				B00100080000000000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

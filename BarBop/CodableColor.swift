@@ -30,7 +30,7 @@ struct CodableColor: Codable, Equatable {
 
     var nsColor: NSColor {
         NSColor(
-            calibratedRed: CGFloat(red),
+            srgbRed: CGFloat(red),
             green: CGFloat(green),
             blue: CGFloat(blue),
             alpha: CGFloat(alpha)

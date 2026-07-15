@@ -8,12 +8,70 @@
 import Foundation
 
 final class EffectSettingsStore {
+    private struct SchemaHeader: Decodable {
+        var schemaVersion: Int
+    }
+
     private struct StoredState: Codable, Equatable {
         var schemaVersion: Int
         var settings: EffectSettings
     }
 
-    private static let currentSchemaVersion = 1
+    private struct LegacyStoredState: Decodable {
+        var schemaVersion: Int
+        var settings: LegacyEffectSettings
+    }
+
+    private struct LegacyVersionTwoStoredState: Decodable {
+        var schemaVersion: Int
+        var settings: LegacyVersionTwoEffectSettings
+    }
+
+    private struct LegacyVersionTwoEffectSettings: Decodable {
+        var isEnabled: Bool
+        var notificationEffectsEnabled: Bool
+        var color: CodableColor
+        var auroraPalette: AuroraPalette
+        var opacity: Double
+        var duration: Double
+        var style: EffectSettings.Style
+
+        var migrated: EffectSettings {
+            EffectSettings(
+                isEnabled: isEnabled,
+                notificationEffectsEnabled: notificationEffectsEnabled,
+                notificationDisplayTarget: .followNotification,
+                color: color,
+                auroraPalette: auroraPalette,
+                opacity: opacity,
+                duration: duration,
+                style: style
+            )
+        }
+    }
+
+    private struct LegacyEffectSettings: Decodable {
+        var isEnabled: Bool
+        var color: CodableColor
+        var opacity: Double
+        var duration: Double
+        var style: EffectSettings.Style
+
+        var migrated: EffectSettings {
+            EffectSettings(
+                isEnabled: isEnabled,
+                notificationEffectsEnabled: false,
+                notificationDisplayTarget: .followNotification,
+                color: color,
+                auroraPalette: .defaults,
+                opacity: opacity,
+                duration: duration,
+                style: style
+            )
+        }
+    }
+
+    private static let currentSchemaVersion = 3
     private let userDefaults: UserDefaults
     private let storageKey: String
     private var state: StoredState
@@ -50,18 +108,51 @@ final class EffectSettingsStore {
     }
 
     private static func loadState(from userDefaults: UserDefaults, key: String) -> StoredState {
-        guard
-            let data = userDefaults.data(forKey: key),
-            let state = try? JSONDecoder().decode(StoredState.self, from: data),
-            state.schemaVersion == currentSchemaVersion
-        else {
+        guard let data = userDefaults.data(forKey: key) else {
             return defaultState()
         }
 
-        return StoredState(
-            schemaVersion: currentSchemaVersion,
-            settings: state.settings.clamped
-        )
+        let decoder = JSONDecoder()
+        guard let header = try? decoder.decode(SchemaHeader.self, from: data) else {
+            return defaultState()
+        }
+
+        switch header.schemaVersion {
+        case currentSchemaVersion:
+            guard let state = try? decoder.decode(StoredState.self, from: data) else {
+                return defaultState()
+            }
+            return StoredState(
+                schemaVersion: currentSchemaVersion,
+                settings: state.settings.clamped
+            )
+        case 1:
+            guard let state = try? decoder.decode(LegacyStoredState.self, from: data) else {
+                return defaultState()
+            }
+            let migratedState = StoredState(
+                schemaVersion: currentSchemaVersion,
+                settings: state.settings.migrated.clamped
+            )
+            if let migratedData = try? JSONEncoder().encode(migratedState) {
+                userDefaults.set(migratedData, forKey: key)
+            }
+            return migratedState
+        case 2:
+            guard let state = try? decoder.decode(LegacyVersionTwoStoredState.self, from: data) else {
+                return defaultState()
+            }
+            let migratedState = StoredState(
+                schemaVersion: currentSchemaVersion,
+                settings: state.settings.migrated.clamped
+            )
+            if let migratedData = try? JSONEncoder().encode(migratedState) {
+                userDefaults.set(migratedData, forKey: key)
+            }
+            return migratedState
+        default:
+            return defaultState()
+        }
     }
 
     private static func defaultState() -> StoredState {

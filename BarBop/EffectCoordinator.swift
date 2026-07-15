@@ -14,7 +14,7 @@ final class EffectCoordinator {
 
     init(
         renderer: MenuBarEffectRendering,
-        settingsStore: EffectSettingsStore = AppEnvironment.shared.effectSettingsStore,
+        settingsStore: EffectSettingsStore,
         reduceMotionProvider: @escaping () -> Bool = {
             NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         }
@@ -27,13 +27,26 @@ final class EffectCoordinator {
     func handleMenuBarClick(_ click: MenuBarClick) {
         let settings = settingsStore.settings
         guard settings.isEnabled else {
-            renderer.cancelCurrentEffect()
             return
         }
 
         renderer.cancelCurrentEffect()
-        renderer.playEffect(
-            in: MenuBarGeometry.menuBarFrame(for: click.screen),
+        renderer.playEffects(
+            in: [MenuBarGeometry.menuBarFrame(for: click.screen)],
+            settings: settings,
+            reduceMotion: reduceMotionProvider()
+        )
+    }
+
+    func handleNotificationBanner(on screens: [ScreenGeometry]) {
+        let settings = settingsStore.settings
+        guard settings.notificationEffectsEnabled else {
+            return
+        }
+
+        renderer.cancelCurrentEffect()
+        renderer.playEffects(
+            in: screens.map { MenuBarGeometry.menuBarFrame(for: $0) },
             settings: settings,
             reduceMotion: reduceMotionProvider()
         )

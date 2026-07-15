@@ -144,7 +144,10 @@ final class MenuBarEffectRenderer: NSView {
         gradientLayer.frame = bounds.insetBy(dx: -bounds.width * 0.4, dy: 0)
         gradientLayer.startPoint = CGPoint(x: 0, y: 0.5)
         gradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
-        gradientLayer.colors = auroraColors(from: settings.color.nsColor, opacity: settings.opacity)
+        gradientLayer.colors = Self.auroraColors(
+            from: settings.auroraPalette,
+            opacity: settings.opacity
+        ).map(\.cgColor)
         gradientLayer.locations = [0, 0.22, 0.46, 0.72, 1]
         gradientLayer.opacity = 0
 
@@ -188,18 +191,15 @@ final class MenuBarEffectRenderer: NSView {
         self.layer?.addSublayer(effectLayer)
     }
 
-    private func auroraColors(from baseColor: NSColor, opacity: Double) -> [CGColor] {
-        let base = baseColor.usingColorSpace(.sRGB) ?? .controlAccentColor
-        let colors = [
-            base.blended(withFraction: 0.55, of: .systemPurple) ?? base,
-            base.blended(withFraction: 0.45, of: .systemBlue) ?? base,
-            base.blended(withFraction: 0.35, of: .systemTeal) ?? base,
-            base.blended(withFraction: 0.45, of: .systemPink) ?? base,
-            base.blended(withFraction: 0.55, of: .systemIndigo) ?? base
-        ]
-
-        return colors.map { color in
-            color.withAlphaComponent(opacity).cgColor
+    static func auroraColors(from palette: AuroraPalette, opacity: Double) -> [NSColor] {
+        [
+            palette.leading.nsColor,
+            palette.middle.nsColor,
+            palette.trailing.nsColor,
+            palette.middle.nsColor,
+            palette.leading.nsColor
+        ].map { color in
+            color.withAlphaComponent(opacity)
         }
     }
 

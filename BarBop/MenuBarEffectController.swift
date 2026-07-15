@@ -9,30 +9,33 @@ import AppKit
 
 protocol MenuBarEffectRendering: AnyObject {
     func cancelCurrentEffect()
-    func playEffect(in menuBarFrame: CGRect, settings: EffectSettings, reduceMotion: Bool)
+    func playEffects(in menuBarFrames: [CGRect], settings: EffectSettings, reduceMotion: Bool)
 }
 
 final class MenuBarEffectController: MenuBarEffectRendering {
-    private var panel: NSPanel?
-    private var renderer: MenuBarEffectRenderer?
+    private struct Presentation {
+        let panel: NSPanel
+        let renderer: MenuBarEffectRenderer
+    }
+
+    private var presentations: [Presentation] = []
     private var hideWorkItem: DispatchWorkItem?
 
-    func playEffect(in menuBarFrame: CGRect, settings: EffectSettings, reduceMotion: Bool) {
+    func playEffects(in menuBarFrames: [CGRect], settings: EffectSettings, reduceMotion: Bool) {
         cancelCurrentEffect()
+        guard !menuBarFrames.isEmpty else { return }
 
-        let panel = panel ?? makePanel(size: menuBarFrame.size)
-        let renderer = renderer ?? MenuBarEffectRenderer(frame: CGRect(origin: .zero, size: menuBarFrame.size))
-        self.panel = panel
-        self.renderer = renderer
+        presentations = menuBarFrames.map { menuBarFrame in
+            let panel = makePanel(size: menuBarFrame.size)
+            let renderer = MenuBarEffectRenderer(frame: CGRect(origin: .zero, size: menuBarFrame.size))
 
-        renderer.frame = CGRect(origin: .zero, size: menuBarFrame.size)
-        panel.contentView = renderer
-        panel.setFrame(menuBarFrame, display: true)
-        panel.alphaValue = 1
-        panel.orderFrontRegardless()
+            panel.contentView = renderer
+            panel.setFrame(menuBarFrame, display: true)
+            panel.alphaValue = 1
+            panel.orderFrontRegardless()
 
-        renderer.play(settings: settings, reduceMotion: reduceMotion) { [weak self] in
-            self?.hide()
+            renderer.play(settings: settings, reduceMotion: reduceMotion, completion: {})
+            return Presentation(panel: panel, renderer: renderer)
         }
 
         let workItem = DispatchWorkItem { [weak self] in
@@ -45,15 +48,21 @@ final class MenuBarEffectController: MenuBarEffectRendering {
     func cancelCurrentEffect() {
         hideWorkItem?.cancel()
         hideWorkItem = nil
-        renderer?.stop()
-        panel?.orderOut(nil)
+        for presentation in presentations {
+            presentation.renderer.stop()
+            presentation.panel.orderOut(nil)
+        }
+        presentations = []
     }
 
     func hide() {
         hideWorkItem?.cancel()
         hideWorkItem = nil
-        renderer?.stop()
-        panel?.orderOut(nil)
+        for presentation in presentations {
+            presentation.renderer.stop()
+            presentation.panel.orderOut(nil)
+        }
+        presentations = []
     }
 
     private func makePanel(size: CGSize) -> NSPanel {
