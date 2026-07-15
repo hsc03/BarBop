@@ -71,6 +71,8 @@ struct EffectSettings: Codable, Equatable {
         case flash
         case pulse
         case sweep
+        case lightning
+        case shimmer
         case aurora
 
         var id: String { rawValue }

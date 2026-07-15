@@ -88,7 +88,10 @@ struct BarBopTests {
     }
 
     @Test func effectStylesIncludeAurora() {
-        #expect(EffectSettings.Style.allCases == [.flash, .pulse, .sweep, .aurora])
+        #expect(
+            EffectSettings.Style.allCases
+                == [.flash, .pulse, .sweep, .lightning, .shimmer, .aurora]
+        )
     }
 
     @Test func effectSettingsStorePersistsSettings() {
