@@ -1,452 +1,162 @@
 # BarBop 제품 기획서
 
-## 1. 문서 목적
+Date: 2026-07-15
 
-이 문서는 BarBop의 제품 방향을 새로 정의하고, 이후 개발 작업의 기준을 제공한다. 이전 방향이었던 "메뉴바 앱 아이콘을 클릭했을 때 열리는 다른 앱의 메뉴 또는 팝오버를 꾸미는 앱"은 macOS 공개 API 제약상 안정적인 제품으로 구현하기 어렵다고 판단했다.
+Status: Current product definition
 
-BarBop은 앞으로 다음 제품으로 개발한다.
+## 1. 제품 정의
 
-> 메뉴바를 클릭하면 메뉴바 전체에 짧은 색상 클릭 효과를 보여주는 macOS 유틸리티
+BarBop은 메뉴바 클릭과 macOS에 실제로 표시된 알림 배너에 짧은 시각
+효과를 재생하는 macOS 메뉴바 유틸리티다. 시스템 메뉴나 타사 팝오버를
+변경하지 않으며, 입력을 가로채지 않는 임시 패널에 효과를 표시한다.
 
-핵심은 다른 앱의 UI를 수정하는 것이 아니라, 메뉴바 영역 위에 입력을 통과시키는 짧은 시각 효과를 덧씌우는 것이다.
+클릭 효과와 알림 효과는 독립적으로 켜고 끌 수 있다. 색상, Aurora 팔레트,
+투명도, 지속 시간, 스타일은 두 효과가 공유한다.
 
-## 2. 제품 정의
+## 2. 제품 원칙
 
-BarBop은 사용자가 macOS 상단 메뉴바를 클릭할 때, 클릭한 디스플레이의 메뉴바 전체에 사용자가 설정한 색상 효과를 짧게 표시하는 앱이다.
+- macOS와 타사 앱의 원래 메뉴 동작을 방해하지 않는다.
+- 화면에 실제로 표시된 알림 배너에만 반응한다.
+- 알림 제목, 본문, 앱 이름, 버튼 레이블을 읽거나 저장하지 않는다.
+- 키보드 이벤트, 화면 이미지, 픽셀, OCR, 시스템 로그를 수집하지 않는다.
+- 사용자 설정 외의 데이터를 영구 저장하지 않으며 네트워크를 사용하지 않는다.
+- 공개 API만 사용하고 Reduce Motion 설정을 존중한다.
+- 현재 알림 감지 방식은 Developer ID 직접 배포를 전제로 한다.
 
-BarBop은 다음을 하지 않는다.
-
-- 기존 메뉴를 열거나 닫는 흐름을 변경하지 않는다.
-- 시스템 메뉴, Control Center, Wi-Fi, 배터리, 시계 메뉴를 수정하지 않는다.
-- 타사 메뉴바 앱의 메뉴 또는 팝오버를 꾸미지 않는다.
-- 클릭 이벤트를 가로채 원래 앱에 전달하지 않는 방식으로 동작하지 않는다.
-- 비공개 프레임워크, 코드 인젝션, SIMBL류 접근을 사용하지 않는다.
-
-BarBop은 다음만 수행한다.
-
-1. 전역 마우스 클릭을 관찰한다.
-2. 클릭 좌표가 메뉴바 영역인지 판단한다.
-3. 메뉴바 영역이면 해당 디스플레이의 메뉴바 프레임 위에 투명 오버레이를 표시한다.
-4. 설정된 색상/투명도/지속시간/효과 스타일로 짧은 애니메이션을 재생한다.
-5. 재생이 끝나면 오버레이를 즉시 숨긴다.
-
-## 3. 제품 가치
-
-BarBop의 가치는 기능적 생산성보다 작고 명확한 사용자 경험 개선에 있다.
-
-- 메뉴바 클릭이 시각적으로 더 분명해진다.
-- 화면 공유, 데모, 강의, UX 리뷰에서 메뉴바 조작을 보기 쉬워진다.
-- macOS 메뉴바에 약한 촉각적 피드백을 추가하는 느낌을 준다.
-- 사용자가 원하는 색상으로 개인화할 수 있다.
-
-이 제품은 복잡한 생산성 도구가 아니라, 작고 안전한 UI 피드백 유틸리티다.
-
-## 4. 핵심 원칙
-
-- 원래 메뉴 동작을 방해하지 않는다.
-- 오버레이는 모든 마우스 입력을 통과시킨다.
-- 앱이 포커스를 훔치지 않는다.
-- 메뉴바가 아닌 클릭에는 반응하지 않는다.
-- 다중 모니터에서는 클릭이 발생한 디스플레이에만 효과를 표시한다.
-- 모든 설정은 로컬에 저장한다.
-- 네트워크, 계정, 분석 SDK를 사용하지 않는다.
-- Reduce Motion 설정을 존중한다.
-- 공개 API만 사용한다.
-- 일반 사용자 배포는 Developer ID 서명과 Apple 공증을 기준으로 한다.
-- Homebrew Cask 배포를 목표로 하되, 공식 저장소 승인 가능성을 보장하지 않는다.
-
-## 5. 사용자 흐름
+## 3. 사용자 흐름
 
 ### 최초 실행
 
-1. 앱이 메뉴바 유틸리티로 실행된다.
-2. 메뉴바 아이콘에 붙은 설정 팝오버가 열리고 BarBop의 동작을 설명한다.
-3. 사용자는 효과 사용 여부, 색상, 투명도, 지속시간, 효과 스타일을 선택한다.
-4. 전역 클릭 관찰에 권한이 필요한 경우, 권한이 필요한 이유와 처리 범위를 설명한다.
-5. 권한이 없더라도 설정 팝오버는 사용할 수 있어야 한다.
-
-### 평상시 동작
-
-1. 사용자가 메뉴바의 시스템 항목, 앱 메뉴, 또는 타사 상태 아이콘을 클릭한다.
-2. macOS는 원래 메뉴 또는 팝오버를 정상적으로 연다.
-3. BarBop은 같은 클릭을 관찰한다.
-4. 클릭 위치가 메뉴바 영역이면 메뉴바 전체에 효과를 표시한다.
-5. 효과는 짧게 표시되고 사라진다.
-
-### 설정 변경
-
-1. 사용자는 BarBop의 자체 메뉴바 아이콘에서 설정을 연다.
-2. 색상, 투명도, 지속시간, 스타일을 변경한다.
-3. 설정은 즉시 저장된다.
-4. 다음 메뉴바 클릭부터 변경된 설정이 적용된다.
-
-## 6. MVP 범위
-
-MVP에 포함한다.
-
-- 메뉴바 클릭 감지
-- 메뉴바 외 클릭 무시
-- 다중 모니터 메뉴바 영역 판정
-- 클릭한 디스플레이의 메뉴바 전체에 효과 표시
-- 입력을 통과시키는 비활성 투명 `NSPanel`
-- 효과 켜기/끄기
-- 색상 선택
-- 투명도 설정
-- 지속시간 설정
-- 기본 효과 스타일 `Flash`
-- 효과 스타일 `Pulse`, `Sweep`, `Aurora`
-- 설정 저장 및 손상 데이터 복구
-- Reduce Motion일 때 단순 페이드 효과
-- 수동 검증 체크리스트
-
-MVP에서 제외한다.
-
-- 다른 앱 메뉴/팝오버 외형 변경
-- 메뉴바 항목별 다른 효과
-- 메뉴 내용 분석
-- 화면 녹화 또는 픽셀 분석
-- 사운드
-- 로그인 시 자동 실행
-- Homebrew 배포
-- 앱 서명/공증 자동화
-
-## 7. 효과 스타일
-
-### Flash
-
-메뉴바 전체가 설정 색상으로 빠르게 나타났다가 사라진다.
-
-MVP의 기본 스타일이다.
-
-### Pulse
-
-메뉴바 전체가 설정 색상으로 나타난 뒤 한 번 더 약하게 맥동한다.
-
-현재 구현되어 있다.
-
-### Sweep
-
-클릭 위치 또는 메뉴바 왼쪽에서 시작해 색상 레이어가 수평으로 지나간다.
-
-현재 구현되어 있다.
-
-### Aurora
-
-설정 색상을 중심으로 여러 보조 색상을 만든 뒤, 메뉴바 전체에 부드러운 그라디언트가 짧게 흐르는 효과다.
-
-특정 브랜드의 고유 시각 표현을 참조하지 않고 BarBop 고유의 추상적인 빛 효과로 구현한다.
-
-현재 구현되어 있다.
-
-### Reduce Motion
-
-시스템 Reduce Motion이 활성화되어 있으면 이동 애니메이션을 사용하지 않고 짧은 페이드만 사용한다.
-
-## 8. 설정 항목
-
-| 항목 | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| 효과 사용 | Bool | true | 메뉴바 클릭 효과를 켜거나 끈다. |
-| 색상 | CodableColor | systemAccentColor | 효과 색상 |
-| 투명도 | Double | 0.35 | 0.05~1.0 범위 |
-| 지속시간 | Double | 0.28 | 초 단위, 0.1~1.0 범위 |
-| 스타일 | EffectStyle | flash | Flash, Pulse, Sweep, Aurora |
-
-색상 저장은 `NSColor`를 직접 Codable로 저장하지 않고, 별도 `CodableColor` 값을 둔다.
-
-## 9. 내부 아키텍처
-
-### AppLifecycle
-
-- 앱 시작과 종료를 관리한다.
-- 자체 메뉴바 아이콘을 제공한다.
-- 메뉴바 아이콘에 붙은 설정 팝오버를 연다.
-- 설정 팝오버 안에 종료 항목을 제공한다.
-- 이벤트 모니터와 효과 컨트롤러를 연결한다.
-
-### MenuBarEventMonitor
-
-- 전역 마우스 클릭을 관찰한다.
-- 이벤트를 변경하거나 차단하지 않는다.
-- 클릭 위치만 앱 내부로 전달한다.
-
-### MenuBarGeometry
-
-- 클릭이 어느 화면에서 발생했는지 판단한다.
-- 클릭 위치가 메뉴바 영역인지 계산한다.
-- 메뉴바 자동 숨김 상황을 위한 fallback 높이를 제공한다.
-- 순수 로직으로 유지해 단위 테스트 가능하게 한다.
-
-### MenuBarEffectController
-
-- 클릭한 화면의 메뉴바 프레임에 맞춘 `NSPanel`을 관리한다.
-- 패널은 borderless, non-activating, transparent, click-through여야 한다.
-- 효과 시작 전 기존 효과를 취소한다.
-- 효과 종료 후 패널을 숨긴다.
-
-### MenuBarEffectRenderer
-
-- 실제 색상 효과를 그린다.
-- Flash, Pulse, Sweep, Aurora 효과를 담당한다.
-- Reduce Motion이면 단순 페이드만 수행한다.
-- 효과 재생이 끝나면 completion을 호출한다.
-
-### EffectSettingsStore
-
-- `EffectSettings`를 UserDefaults에 Codable 데이터로 저장한다.
-- 스키마 버전을 포함한다.
-- 손상된 데이터나 알 수 없는 버전은 기본값으로 복구한다.
-
-### SettingsView
-
-- SwiftUI 설정 화면이다.
-- 효과 사용 여부, 색상, 투명도, 지속시간, 스타일을 제공한다.
-- 추후 권한 상태와 앱 정보도 포함한다.
-
-## 10. 데이터 모델 초안
-
-```swift
-struct CodableColor: Codable, Equatable {
-    var red: Double
-    var green: Double
-    var blue: Double
-    var alpha: Double
-}
-
-struct EffectSettings: Codable, Equatable {
-    enum Style: String, Codable, CaseIterable, Identifiable {
-        case flash
-        case pulse
-        case sweep
-        case aurora
-
-        var id: String { rawValue }
-    }
-
-    var isEnabled: Bool
-    var color: CodableColor
-    var opacity: Double
-    var duration: Double
-    var style: Style
-}
-```
-
-## 11. 현재 코드 재활용 계획
-
-유지한다.
-
-- `MenuBarEventMonitor`
-- `MenuBarGeometry`
-- `ContentView`의 설정 UI 기반
-- 좌표 계산 테스트
-- `OverlayWindowController`의 패널 생성 방식 일부
-- `ReactionCoordinator`의 클릭 처리 흐름 일부
-
-제거하거나 대체한다.
-
-- `StatusItemResolver`
-- `DetectedStatusItem`
-- `Character`
-- `CharacterAssignment`
-- `CharacterStore`
-- `CharacterRenderer`
-- `AssignmentStore`
-- `ReactionSettings`
-- 프로그램별 캐릭터 매핑
-- 최근 감지 항목 목록
-
-새로 만든다.
-
-- `CodableColor`
-- `EffectSettings`
-- `EffectSettingsStore`
-- `MenuBarEffectController`
-- `MenuBarEffectRenderer`
-- `EffectCoordinator`
-
-## 12. 개발 방식
-
-현재 피벗 단계에서는 feature 브랜치를 만들지 않고 `develop`에서 직접 작업한다.
-
-커밋 메시지는 기존 규칙을 유지한다.
-
-- 기능 추가: `feat:`
-- 수정: `fix:`
-- 리팩터링: `refactor:`
-- 배포 관련: `deploy:`
-- 그 외: `chore:`
-
-작업 단위는 작게 유지한다.
-
-## 13. 개발 단계
-
-### 단계 1: 피벗 정리
-
-목표는 캐릭터/프로그램별 매핑 중심 구조를 제거하고, 메뉴바 클릭 효과 앱에 맞는 최소 구조로 바꾸는 것이다.
-
-작업:
-
-- 캐릭터 관련 모델 제거
-- 상태 아이템 식별 로직 제거
-- 최근 감지 항목 저장 제거
-- 새 설정 모델 추가
-- 기존 좌표 계산 테스트 유지
-
-완료 조건:
-
-- 빌드 성공
-- 캐릭터/감지 항목 관련 UI가 남지 않음
-- 메뉴바 클릭 감지 구조는 유지됨
-
-### 단계 2: Flash 효과 MVP
-
-작업:
-
-- 메뉴바 전체 프레임에 색상 오버레이 표시
-- 효과 지속시간 후 자동 숨김
-- 기존 효과 재생 중 새 클릭이 들어오면 이전 효과 취소
-- 메뉴바 외 클릭 무시
-
-완료 조건:
-
-- 메뉴바 클릭 시 색상 효과가 표시됨
-- 원래 메뉴가 정상적으로 열림
-- 오버레이가 입력을 가로채지 않음
-- 다중 모니터에서 클릭한 화면에만 표시됨
-
-### 단계 3: 설정 UI
-
-작업:
-
-- 자체 메뉴바 아이콘에서 설정 팝오버 열기
-- 효과 사용 토글
-- 색상 선택
-- 투명도 조절
-- 지속시간 조절
-- 스타일 선택
-- 설정 저장 및 복구 테스트
-
-완료 조건:
-
-- 자체 메뉴바 아이콘에서 설정 팝오버를 열 수 있음
-- 설정 변경이 즉시 반영됨
-- 앱 재시작 후 설정 유지
-- 손상된 저장 데이터는 기본값으로 복구됨
-
-### 단계 4: 효과 스타일 확장
-
-작업:
-
-- Pulse 구현
-- Sweep 구현
-- Aurora 구현
-- Reduce Motion 대응 정리
-
-완료 조건:
-
-- Flash, Pulse, Sweep, Aurora 모두 동작
-- Reduce Motion에서는 이동 효과 없이 단순 페이드만 표시
-
-### 단계 5: 품질 정리
-
-작업:
-
-- 수동 검증 문서 작성: `docs/phase-5-quality-checklist.md`
-- README 업데이트
-- 개인정보/권한 설명 문서 작성: `docs/privacy-and-permissions.md`
-- Release 빌드 검증 및 결과 기록: `docs/phase-5-validation-report.md`
-
-완료 조건:
-
-- 주요 수동 검증 통과
-- 알려진 제한사항 문서화
-- 배포 준비 브랜치로 이동 가능한 상태
-
-### 단계 6: 서명, 공증, GitHub Release 준비
-
-목표는 일반 사용자가 안전하게 다운로드할 수 있는 배포 산출물을 만드는 것이다.
-
-작업:
-
-- Release 빌드 스크립트 작성: `scripts/build-release.sh`
-- 앱 버전 및 빌드 번호 정리
-- Developer ID 서명 절차 문서화: `docs/release-process.md`
-- Apple 공증 및 stapling 절차 문서화: `docs/release-process.md`
-- 초기 배포 형식은 zip으로 결정
-- SHA-256 체크섬 생성
-- GitHub Release 작성 절차 정리: `docs/release-process.md`
-- 인증 정보는 저장소에 기록하지 않고 환경 변수 또는 Keychain profile로만 사용
-
-완료 조건:
-
-- Release 빌드 생성 가능
-- 서명/공증 확인 명령 문서화
-- GitHub Release에 올릴 산출물과 체크섬을 생성할 수 있음
-- 비밀 값이 Git에 포함되지 않음
-
-### 단계 7: Homebrew Cask 준비
-
-목표는 GitHub Release 산출물을 Homebrew Cask로 설치할 수 있게 만드는 것이다.
-
-작업:
-
-- 공식 Homebrew Cask 문서 기준 확인
-- `barbop` Cask 파일 작성
-- `version`, `sha256`, `url`, `name`, `desc`, `homepage`, `app`, `zap` 정의
-- 지원 macOS 버전 조건 정리
-- 로컬 설치/삭제 검증 절차 작성
-- `brew audit --cask barbop` 검증
-- `brew style --cask barbop` 검증
-- 공식 `homebrew-cask` 제출용 PR 설명 초안 작성
-
-완료 조건:
-
-- GitHub Release URL과 SHA-256이 정확함
-- Cask로 설치 및 제거 가능
-- audit/style 검증을 통과하거나 남은 이슈가 문서화됨
-- 공식 Homebrew 승인 가능성을 보장한다고 표현하지 않음
-
-## 14. 수동 검증 기준
-
-- 메뉴바 클릭 시 효과가 표시된다.
-- 앱 메뉴, 시스템 상태 아이콘, 타사 상태 아이콘 클릭에서 원래 메뉴가 열린다.
-- 메뉴바 외 클릭에는 효과가 표시되지 않는다.
-- 오버레이가 클릭이나 키보드 포커스를 가로채지 않는다.
-- 외부 모니터에서 클릭한 모니터에만 효과가 표시된다.
-- 메뉴바 자동 숨김 환경에서 오동작하지 않는다.
-- 빠른 연속 클릭에서 패널이 누적되지 않는다.
-- Reduce Motion 설정을 켰을 때 효과가 단순화된다.
-
-## 15. 개인정보 및 권한 정책
-
-BarBop은 클릭 위치가 메뉴바 영역인지 판단하기 위해 전역 클릭을 관찰할 수 있다. 저장하는 데이터는 사용자 설정뿐이다.
-
-저장하지 않는다.
-
-- 클릭한 일반 화면 위치 기록
-- 메뉴 내용
-- 앱 사용 기록
-- 키보드 입력
-- 화면 이미지
-- 원격 로그
-
-네트워크 요청은 사용하지 않는다.
-
-## 16. 릴리스 전략
-
-1. `develop`에서 MVP 구현
-2. 수동 검증과 Release 빌드 확인
-3. `release` 브랜치에서 버전, 서명, 공증, 릴리스 문서 정리
-4. GitHub Release에 서명/공증된 산출물 게시
-5. Release URL과 SHA-256을 기준으로 Homebrew Cask 작성
-6. 로컬 Cask 설치/삭제/audit/style 검증
-7. 공식 `homebrew-cask` 제출 PR 준비
-8. 최종 안정 릴리스를 `main`에 반영
-
-Homebrew Cask는 앱의 신뢰를 대신 제공하지 않는다. 일반 사용자용 산출물은 Homebrew 배포 여부와 관계없이 서명과 공증을 기본으로 한다.
-
-## 17. 최종 결정
-
-BarBop은 기존의 캐릭터 반응 앱 또는 다른 앱 메뉴 꾸미기 앱 방향을 중단한다.
-
-앞으로의 BarBop은 단순하고 안전한 메뉴바 클릭 효과 앱으로 개발한다.
+1. BarBop이 메뉴바 유틸리티로 실행된다.
+2. 메뉴바 아이콘에 붙은 설정 팝오버가 최초 한 번 자동으로 열린다.
+3. 사용자는 Effects 탭에서 클릭 효과와 공용 시각 설정을 조정한다.
+4. 알림 효과는 사용자가 Notifications 탭에서 명시적으로 켤 때만 권한
+   안내를 시작한다.
+
+### 클릭 효과
+
+1. 사용자가 macOS 메뉴바를 클릭한다.
+2. 원래 메뉴나 팝오버가 정상적으로 열린다.
+3. 클릭이 발생한 디스플레이의 메뉴바에 선택한 효과가 재생된다.
+
+### 알림 효과
+
+1. 사용자가 Notification Effects를 켠다.
+2. BarBop은 데이터 접근 범위를 먼저 설명하고 Accessibility 승인을 요청한다.
+3. Notification Center가 화면에 배너를 표시하면 구조와 프레임만 관찰한다.
+4. 사용자가 선택한 디스플레이 정책에 따라 메뉴바 효과를 재생한다.
+5. Accessibility가 해제되면 observer를 중지하고 알림 효과를 자동으로 끈다.
+
+## 4. 기능 범위
+
+### 포함
+
+- 메뉴바 클릭 감지와 클릭한 디스플레이 판정
+- 표시된 알림 배너의 공개 Accessibility 구조 감지
+- Click Effects와 Notification Effects 독립 토글
+- Flash, Pulse, Sweep, Aurora 스타일
+- 일반 효과의 단일 색상과 Aurora의 독립적인 3색 팔레트
+- 투명도와 지속 시간 설정
+- Reduce Motion 페이드 대체
+- 알림 대상 화면 선택
+- 설정 저장, 이전 스키마 마이그레이션, 손상 데이터 복구
+- 로컬 테스트 알림과 권한 문제 해결 안내
+
+### 제외
+
+- macOS에 도착했지만 화면에 표시되지 않은 알림 감지
+- 알림 내용이나 발신 앱 식별
+- 시스템 메뉴 및 타사 팝오버 외형 변경
+- 화면 캡처, OCR, Notification Center 데이터베이스 또는 비공개 API
+- 사운드, 계정, 분석 SDK, 네트워크 기능
+- Mac App Store 배포
+
+## 5. 효과 설정
+
+| 항목 | 기본값 | 동작 |
+|---|---|---|
+| Click Effects | 켜짐 | 메뉴바 클릭 효과를 제어한다. |
+| Notification Effects | 꺼짐 | 표시 알림 배너 효과와 AX observer를 제어한다. |
+| Style | Flash | Flash, Pulse, Sweep, Aurora 중 선택한다. |
+| Color | System Blue | Aurora 외 스타일의 단일 색상이다. |
+| Aurora Palette | 파랑·보라·청록 | 세 색을 그라디언트에 직접 사용한다. |
+| Opacity | 0.35 | 0.05~1.0 범위다. |
+| Duration | 0.28초 | 0.1~1.0초 범위다. |
+| Notification Display | Follow Notification | 알림 효과의 화면 정책이다. |
+
+색상 패널의 알파 편집은 사용하지 않으며 투명도는 Opacity에서만 조절한다.
+설정은 `EffectSettings` 스키마 v3으로 저장한다. v1과 v2 데이터는 사용자
+값을 보존하면서 새 필드를 기본값으로 보충한다.
+
+## 6. 알림 디스플레이 정책
+
+- `Follow Notification`: 배너가 감지된 화면, 찾지 못하면 현재 메인 화면
+- `Main Display`: 현재 macOS 메인 화면
+- 특정 모니터: 저장된 디스플레이 UUID가 일치하는 화면
+- `All Displays`: 연결된 모든 화면에 동시에 재생
+
+특정 모니터가 연결 해제되면 선택은 유지하고 메인 화면을 임시로 사용한다.
+같은 UUID의 모니터가 다시 연결되면 자동으로 원래 선택을 복구한다. 이
+정책은 알림 효과에만 적용되며 클릭 효과는 항상 클릭한 화면을 따른다.
+
+## 7. 인터페이스
+
+설정은 별도 앱 창이 아닌 약 520×520 크기의 메뉴바 팝오버로 제공한다.
+
+- Effects 탭: Click Effects, Style, Color/Aurora Colors, Opacity, Duration
+- Notifications 탭: Notification Effects, 상태·권한 안내, Display
+- Troubleshooting: 로컬 알림 상태와 테스트 알림 전송
+- 고정 하단: 자동 저장 안내와 Quit BarBop
+
+정상적인 클릭 모니터 상태는 표시하지 않는다. 전역 마우스 모니터 설치가
+실패했을 때만 Effects 탭에 오류 안내를 표시한다.
+
+## 8. 아키텍처
+
+| 컴포넌트 | 책임 |
+|---|---|
+| `AppDelegate` / `AppEnvironment` | 앱 수명주기, 상태 아이템, 팝오버, 서비스 연결 |
+| `EffectSettingsStore` | 스키마 v3 저장, v1/v2 마이그레이션, 복구 |
+| `MenuBarEventMonitor` | 전역·로컬 마우스 클릭 관찰 |
+| `NotificationBannerDetector` | AX 연결, 구조 필터, 중복 제거, 재연결 |
+| `NotificationEffectController` | 권한, 상태, 화면 라우팅, 효과 실행 |
+| `NotificationDisplayResolver` | 알림 디스플레이 정책의 순수 해석 |
+| `MenuBarEffectController` | 단일·다중 click-through 패널 재생 |
+| `LocalTestNotificationController` | 로컬 알림 권한·표시 가능 여부와 테스트 전송 |
+| `NotificationObserverSpike` | 개발 전용 AX 진단 및 신뢰성 검증 |
+
+새 클릭이나 알림 이벤트가 들어오면 기존의 모든 효과 패널을 취소하고 가장
+최근 이벤트를 재생한다. Spike와 BarBop은 동일한 detector core를 사용하지만
+Spike 앱은 릴리스 ZIP에 포함하지 않는다.
+
+## 9. 권한과 배포
+
+클릭 효과는 Accessibility를 선제 요청하지 않는다. 알림 효과를 켤 때만
+Accessibility 승인을 요청하며, 로컬 테스트 알림 권한과 명확히 구분한다.
+
+검증한 App Sandbox 구성은 Accessibility 클라이언트로 등록되지 않아 BarBop은
+Sandbox를 끄고 Hardened Runtime을 유지한다. 배포 순서는 다음과 같다.
+
+1. `develop`에서 자동·수동 신뢰성 검증
+2. `release`에서 버전 `0.1.0`과 빌드 `1` 확정
+3. Developer ID Application 서명, 공증, stapling
+4. 검증된 release 커밋을 `main`에 반영
+5. 변경 불가능한 GitHub Release와 SHA-256 게시
+6. 별도 `hsc03/homebrew-tap` 저장소의 개인 Cask 게시
+
+공식 `Homebrew/homebrew-cask` 제출과 Mac App Store 배포는 현재 범위가 아니다.
+
+## 10. 완료 기준
+
+- Debug/Release 및 진단 타깃 빌드 성공
+- 전체 단위 테스트 통과
+- 세 디스플레이에서 클릭·알림 화면 정책 통과
+- 표시 배너 20건 중 최소 19건 감지, 알림당 효과 한 번
+- 유휴·Notification Center 조작 중 오탐 0건
+- 표시되지 않은 알림에 효과 0회
+- 최대 감지 지연 500ms 이하
+- Developer ID 서명, 공증, stapling, Gatekeeper 검증 통과
+
+세부 수동 항목과 결과는 `phase-5-quality-checklist.md`,
+`phase-5-validation-report.md`, `notification-trigger-spike-report.md`를 기준으로
+판정한다.

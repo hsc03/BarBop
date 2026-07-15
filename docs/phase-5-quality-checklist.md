@@ -7,12 +7,11 @@ Branch: `develop`
 
 ## Build Checks
 
-- [ ] Debug build succeeds.
-- [ ] Release build succeeds.
+- [x] Debug build succeeds.
+- [x] Release build succeeds.
 - [ ] Xcode Issue Navigator has no errors.
-- [ ] Swift Testing unit tests compile.
-- [ ] If command-line test execution is blocked by the local sandbox, record
-      the exact error in the phase report.
+- [x] Swift Testing unit tests compile.
+- [x] Command-line execution passes the full 44-test suite.
 
 ## Manual App Checks
 

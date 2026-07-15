@@ -1,5 +1,10 @@
 # BarBop Engineering Harness
 
+> Historical implementation harness. Its phase branches and gates document the
+> original development sequence and have been superseded by the Phase 5 quality
+> checklist and current release process. Retain it for engineering history, not
+> as the current release status.
+
 This document defines the working harness for implementing BarBop in small,
 verifiable slices. It is intentionally separate from product planning: the goal
 is to keep each development step testable, reviewable, and safe for a macOS

@@ -1,5 +1,9 @@
 # Phase 1 Manual Verification Checklist
 
+> Historical development checklist. Phase 1 has been superseded by the current
+> Phase 5 quality checklist; unchecked boxes below are retained as design
+> history and are not current release status.
+
 Use this checklist after building and running BarBop from Xcode.
 
 Branch: `develop`

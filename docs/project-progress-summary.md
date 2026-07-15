@@ -17,7 +17,8 @@ displays; BarBop does not read notification content.
 ## Current Feature Set
 
 - Menu bar status item with an attached settings popover and Quit action.
-- First-launch settings popover guidance and click-monitor status.
+- First-launch settings popover guidance and failure-only click-monitor warning.
+- Compact Effects and Notifications tabs with collapsed troubleshooting tools.
 - Independent Click Effects and Notification Effects toggles.
 - Flash, Pulse, Sweep, and three-color Aurora styles.
 - Blue default color, dedicated opacity control, and persistent settings.
@@ -57,7 +58,7 @@ current notification implementation.
 ## Validation Status
 
 - BarBop and NotificationObserverSpike Debug and Release builds have passed.
-- The full automated suite most recently passed 42 tests.
+- The full automated suite most recently passed 44 tests.
 - Settings migration, detector filtering and deduplication, permission gating,
   notification scheduling, display resolution, and multi-panel playback have
   automated coverage.
@@ -75,7 +76,7 @@ matrix.
 
 ## Repository and Release Flow
 
-- Active implementation is committed to `develop`.
+- Active implementation is maintained on `develop`.
 - Validated release preparation moves to `release`.
 - Stable release history is merged to `main` after signing and validation.
 - Source and GitHub Release artifacts live in `hsc03/BarBop`.
@@ -88,7 +89,7 @@ arm64 requirements must be verified before publishing the Cask.
 ## Next Work
 
 1. Complete the manual notification and multi-display reliability matrix.
-2. Finalize the minimum supported macOS version and CPU architecture.
+2. Reconfirm the macOS 26.5 minimum and Apple silicon-only release settings.
 3. Prepare the `release` branch and set version/build numbers.
 4. Sign with Developer ID, notarize, staple, and verify on a clean account.
 5. Publish the immutable GitHub Release and public SHA-256 checksum.

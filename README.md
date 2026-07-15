@@ -1,9 +1,9 @@
 # BarBop
 
-BarBop is a small macOS menu bar utility that adds a short visual click effect
-across the menu bar. It does not modify system menus or third-party menu bar
-apps. It only observes clicks, checks whether the click happened in the menu
-bar area, and shows a temporary click-through overlay on the clicked display.
+BarBop is a small macOS menu bar utility that adds short visual effects for
+menu bar clicks and visible notification banners. It does not modify system
+menus or third-party menu bar apps. Effects appear in temporary click-through
+overlays and use the display policy selected by the user.
 
 ## Current Features
 
