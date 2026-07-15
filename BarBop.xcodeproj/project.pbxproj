@@ -51,9 +51,9 @@
 			path = NotificationObserverSpike;
 			sourceTree = "<group>";
 		};
-		C00100010000000000000001 /* NotificationObserverSpikeCore */ = {
+		C00100010000000000000001 /* NotificationBannerCore */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = NotificationObserverSpikeCore;
+			path = NotificationBannerCore;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -97,7 +97,7 @@
 				AE078F522FFD1B000041EBD1 /* BarBopTests */,
 				AE078F5C2FFD1B000041EBD1 /* BarBopUITests */,
 				B00100020000000000000002 /* NotificationObserverSpike */,
-				C00100010000000000000001 /* NotificationObserverSpikeCore */,
+				C00100010000000000000001 /* NotificationBannerCore */,
 				AE078F432FFD1B000041EBD1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -130,7 +130,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				AE078F442FFD1B000041EBD1 /* BarBop */,
-				C00100010000000000000001 /* NotificationObserverSpikeCore */,
+				C00100010000000000000001 /* NotificationBannerCore */,
 			);
 			name = BarBop;
 			packageProductDependencies = (
@@ -199,7 +199,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				B00100020000000000000002 /* NotificationObserverSpike */,
-				C00100010000000000000001 /* NotificationObserverSpikeCore */,
+				C00100010000000000000001 /* NotificationBannerCore */,
 			);
 			name = NotificationObserverSpike;
 			packageProductDependencies = (
@@ -610,6 +610,7 @@
 				OTHER_CODE_SIGN_FLAGS = "--options=runtime";
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.hsc03.NotificationObserverSpike;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -632,6 +633,7 @@
 				OTHER_CODE_SIGN_FLAGS = "--options=runtime";
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.hsc03.NotificationObserverSpike;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;

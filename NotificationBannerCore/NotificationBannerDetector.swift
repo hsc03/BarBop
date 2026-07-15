@@ -150,7 +150,7 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
             return
         case .processUnavailable:
             state = .unavailable
-            statusDetail = "The com.apple.notificationcenterui process is not running. The spike will retry when it launches."
+            statusDetail = "The Notification Center process is not running. The observer will retry when it launches."
             return
         case .ready:
             break

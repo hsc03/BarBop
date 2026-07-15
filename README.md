@@ -51,7 +51,12 @@ blocked by CoreSimulator or test manager permissions in some environments.
 
 `NotificationObserverSpike` is a development-only diagnostic target used to
 verify Notification Center's public Accessibility structure. It is not bundled
-in the BarBop application or included in release ZIP files.
+in the BarBop application or included in release ZIP files, and its target is
+explicitly marked to skip installation.
+
+The production app and diagnostic target compile the same detector sources from
+`NotificationBannerCore`. These sources are linked into each app binary; they
+are not a separate framework or release artifact.
 
 On the first launch, BarBop opens its settings popover from the menu bar item
 once. Later, clicking the BarBop menu bar item toggles the same attached

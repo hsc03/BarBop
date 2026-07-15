@@ -3,7 +3,7 @@ import Foundation
 import Testing
 @testable import BarBop
 
-struct NotificationObserverSpikeCoreTests {
+struct NotificationBannerCoreTests {
     private let classifier = NotificationBannerCandidateClassifier()
     private let primary = NotificationBannerScreen(
         id: 1,
