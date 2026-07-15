@@ -9,7 +9,7 @@ bar area, and shows a temporary click-through overlay on the clicked display.
 
 - Menu bar click detection
 - First-launch settings popover guidance
-- Click monitoring status in the menu bar popover
+- Conditional guidance when click monitoring cannot start
 - Click-through menu bar overlay
 - Multi-display menu bar targeting
 - Effect enable/disable setting
@@ -54,21 +54,29 @@ verify Notification Center's public Accessibility structure. It is not bundled
 in the BarBop application or included in release ZIP files.
 
 On the first launch, BarBop opens its settings popover from the menu bar item
-once so the effect controls and click monitoring status are visible. Later,
-clicking the BarBop menu bar item toggles the same attached popover; no separate
-settings window is created. The status reports whether BarBop created
-its system-wide mouse event monitor; it does not claim that a particular macOS
-privacy permission has been granted. BarBop does not monitor keyboard events.
+once. Later, clicking the BarBop menu bar item toggles the same attached
+popover; no separate settings window is created. Effects and Notifications are
+organized in separate tabs. Click-monitoring guidance appears only when the
+system-wide mouse event monitor cannot start. BarBop does not monitor keyboard
+events.
 
-The settings popover can send a fixed local test notification after the user
-grants macOS notification permission. This diagnostic action does not enable
-notification effects, change effect settings, or use the network.
+The Notifications tab includes a collapsed Troubleshooting section that can
+send a fixed local test notification after the user grants macOS notification
+permission. This diagnostic action does not enable notification effects,
+change effect settings, or use the network.
 
 Click Effects and Notification Effects are independent. Notification Effects
 observe only banners that macOS actually displays. Enabling them requires
 Accessibility approval because BarBop watches the public structural
 Accessibility events exposed by Notification Center. BarBop does not read the
-notification title, body, source app, or button labels.
+notification title, body, source app, or button labels. BarBop explains this
+use before opening the macOS Accessibility prompt and disables notification
+effects if access is later revoked.
+
+Local test notifications also require BarBop alerts to use a visible banner or
+alert style. Troubleshooting links to System Settings when local notifications
+are denied or their banners are disabled. Focus modes and other system delivery
+settings can still suppress a test banner.
 
 Notification display selection is stored by the display's stable UUID. If a
 selected display is disconnected, BarBop temporarily uses the current main

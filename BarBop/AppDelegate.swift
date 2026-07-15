@@ -114,7 +114,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         let popover = NSPopover()
         popover.behavior = .transient
         popover.animates = true
-        popover.contentSize = NSSize(width: 640, height: 700)
+        popover.contentSize = NSSize(width: 520, height: 520)
         popover.contentViewController = NSHostingController(rootView: ContentView())
         return popover
     }

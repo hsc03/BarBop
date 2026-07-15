@@ -10,20 +10,27 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var settings = AppEnvironment.shared.effectSettingsStore.settings
+    @State private var selectedTab: SettingsTab = .effects
+    @State private var isTroubleshootingExpanded = false
+    @State private var isShowingAccessibilityExplanation = false
     @ObservedObject private var environment = AppEnvironment.shared
     @ObservedObject private var testNotificationController = AppEnvironment.shared.localTestNotificationController
     @ObservedObject private var notificationEffectController = AppEnvironment.shared.notificationEffectController
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 14) {
             header
-            monitoringStatus
-            controls
-            Spacer()
+            tabPicker
+            Divider()
+            ScrollView {
+                selectedTabContent
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                    .padding(.vertical, 2)
+            }
             footer
         }
-        .frame(minWidth: 560, minHeight: 620, alignment: .topLeading)
         .padding(20)
+        .frame(width: 520, height: 520, alignment: .topLeading)
         .task {
             reload()
             notificationEffectController.refreshScreens()
@@ -38,33 +45,25 @@ struct ContentView: View {
         }
     }
 
-    private var monitoringStatus: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: monitoringStatusSymbol)
-                .foregroundStyle(monitoringStatusColor)
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Click Monitoring: \(monitoringStatusLabel)")
-                    .fontWeight(.medium)
-                Text(monitoringStatusDetail)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
-    }
-
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("BarBop Settings")
+            Text("BarBop")
                 .font(.title2)
                 .fontWeight(.semibold)
-            Text("Adds a short click-through color effect when you click the macOS menu bar.")
+            Text("Menu bar effects for clicks and notifications.")
+                .font(.callout)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var tabPicker: some View {
+        Picker("Settings section", selection: $selectedTab) {
+            ForEach(SettingsTab.allCases) { tab in
+                Text(tab.label).tag(tab)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
     }
 
     private var footer: some View {
@@ -82,74 +81,201 @@ struct ContentView: View {
         }
     }
 
-    private var controls: some View {
-        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 14) {
-            GridRow {
-                Text("Click Effects")
-                Toggle("Enabled", isOn: settingsBinding(\.isEnabled))
-                    .labelsHidden()
+    @ViewBuilder
+    private var selectedTabContent: some View {
+        switch selectedTab {
+        case .effects:
+            effectsTab
+        case .notifications:
+            notificationsTab
+        }
+    }
+
+    private var effectsTab: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Toggle("Click Effects", isOn: settingsBinding(\.isEnabled))
+                .fontWeight(.medium)
+
+            if environment.clickMonitoringState == .unavailable {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .accessibilityHidden(true)
+                    Text("Click monitoring could not start. Quit and reopen BarBop, then check macOS privacy settings if the problem continues.")
+                        .font(.caption)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
             }
 
-            GridRow(alignment: .top) {
-                Text("Notifications")
-                VStack(alignment: .leading, spacing: 7) {
-                    Toggle(
-                        "Notification Effects (Experimental)",
-                        isOn: notificationEffectsBinding
-                    )
-                    HStack(alignment: .top, spacing: 7) {
-                        Image(systemName: notificationStatusSymbol)
-                            .foregroundStyle(notificationStatusColor)
-                            .accessibilityHidden(true)
-                        Text(notificationEffectController.statusMessage)
-                            .font(.caption)
+            Divider()
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Appearance")
+                    .font(.headline)
+                Text("These settings are shared by click and notification effects.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 14) {
+                GridRow {
+                    Text("Style")
+                    Picker("Style", selection: settingsBinding(\.style)) {
+                        ForEach(EffectSettings.Style.allCases) { style in
+                            Text(label(for: style)).tag(style)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                }
+
+                GridRow {
+                    if settings.style == .aurora {
+                        Text("Aurora Colors")
+                        HStack(spacing: 10) {
+                            CompactColorWell(
+                                selection: colorBinding(\.auroraPalette.leading),
+                                accessibilityLabel: "Aurora leading color"
+                            )
+                            CompactColorWell(
+                                selection: colorBinding(\.auroraPalette.middle),
+                                accessibilityLabel: "Aurora middle color"
+                            )
+                            CompactColorWell(
+                                selection: colorBinding(\.auroraPalette.trailing),
+                                accessibilityLabel: "Aurora trailing color"
+                            )
+                        }
+                    } else {
+                        Text("Color")
+                        CompactColorWell(
+                            selection: colorBinding(\.color),
+                            accessibilityLabel: "Effect color"
+                        )
+                    }
+                }
+
+                GridRow {
+                    Text("Opacity")
+                    HStack {
+                        Slider(value: settingsBinding(\.opacity), in: 0.05...1)
+                        Text(settings.opacity.formatted(.percent.precision(.fractionLength(0))))
+                            .monospacedDigit()
                             .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(width: 48, alignment: .trailing)
                     }
-                    if notificationEffectController.state == .permissionRequired {
-                        Button("Open Accessibility Settings") {
-                            notificationEffectController.openAccessibilitySettings()
-                        }
-                    }
+                }
+
+                GridRow {
+                    Text("Duration")
                     HStack {
-                        Text("Display")
-                            .font(.callout)
-                        Picker("Notification display", selection: notificationDisplaySelectionBinding) {
-                            Text("Follow Notification").tag(NotificationDisplaySelection.followNotification)
-                            Text("Main Display").tag(NotificationDisplaySelection.mainDisplay)
-                            Text("All Displays").tag(NotificationDisplaySelection.allDisplays)
-                            Divider()
-                            if let missing = missingSpecificDisplay {
-                                Text("\(missing.name) (Disconnected)")
-                                    .tag(NotificationDisplaySelection.specificDisplay(missing.identifier))
-                            }
-                            ForEach(selectableDisplays, id: \.id) { display in
-                                if let identifier = display.persistentIdentifier {
-                                    Text(display.isMain ? "\(display.name) (Main)" : display.name)
-                                        .tag(NotificationDisplaySelection.specificDisplay(identifier))
-                                }
-                            }
+                        Slider(value: settingsBinding(\.duration), in: 0.1...1)
+                        Text("\(settings.duration, specifier: "%.2f")s")
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .frame(width: 48, alignment: .trailing)
+                    }
+                }
+            }
+        }
+    }
+
+    private var notificationsTab: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Toggle(
+                "Notification Effects (Experimental)",
+                isOn: notificationEffectsBinding
+            )
+            .fontWeight(.medium)
+
+            Text("Requires Accessibility to detect where visible notification banners appear. Notification contents are not read.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if isShowingAccessibilityExplanation {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Accessibility Access")
+                        .fontWeight(.medium)
+                    Text("BarBop observes only the structure and position of visible notification banners. It does not read notification contents, app names, keyboard input, or screen pixels.")
+                        .font(.caption)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack {
+                        Button("Cancel") {
+                            isShowingAccessibilityExplanation = false
                         }
-                        .labelsHidden()
-                        .frame(maxWidth: 300)
+                        Button("Continue") {
+                            isShowingAccessibilityExplanation = false
+                            notificationEffectController.setEnabled(true)
+                            reload()
+                        }
+                        .keyboardShortcut(.defaultAction)
                     }
-                    if missingSpecificDisplay != nil {
-                        Text("The selected display is disconnected. Notification effects will use Main Display until it reconnects.")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.blue.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+            }
+
+            notificationMonitoringStatus
+
+            Divider()
+
+            HStack {
+                Text("Display")
+                Spacer()
+                Picker("Notification display", selection: notificationDisplaySelectionBinding) {
+                    Text("Follow Notification").tag(NotificationDisplaySelection.followNotification)
+                    Text("Main Display").tag(NotificationDisplaySelection.mainDisplay)
+                    Text("All Displays").tag(NotificationDisplaySelection.allDisplays)
                     Divider()
-                    HStack {
-                        Button(testNotificationController.isSending ? "Sending…" : "Send Test Notification") {
-                            Task {
-                                await testNotificationController.sendTestNotification()
-                            }
+                    if let missing = missingSpecificDisplay {
+                        Text("\(missing.name) (Disconnected)")
+                            .tag(NotificationDisplaySelection.specificDisplay(missing.identifier))
+                    }
+                    ForEach(selectableDisplays, id: \.id) { display in
+                        if let identifier = display.persistentIdentifier {
+                            Text(display.isMain ? "\(display.name) (Main)" : display.name)
+                                .tag(NotificationDisplaySelection.specificDisplay(identifier))
                         }
-                        .disabled(testNotificationController.isSending)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: 300)
+            }
+
+            if missingSpecificDisplay != nil {
+                Text("The selected display is disconnected. Notification effects will use Main Display until it reconnects.")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Divider()
+
+            DisclosureGroup("Troubleshooting", isExpanded: $isTroubleshootingExpanded) {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("Local notification permission")
+                            .font(.caption)
+                        Spacer()
                         Text(testNotificationPermissionLabel)
                             .font(.caption)
                             .foregroundStyle(testNotificationPermissionColor)
+                    }
+                    Button(testNotificationController.isSending ? "Sending…" : "Send Test Notification") {
+                        Task {
+                            await testNotificationController.sendTestNotification()
+                        }
+                    }
+                    .disabled(!testNotificationController.canSendTestNotification)
+                    if testNotificationController.requiresNotificationSettings {
+                        Button("Open Notification Settings") {
+                            testNotificationController.openNotificationSettings()
+                        }
                     }
                     Text(testNotificationController.statusMessage)
                         .font(.caption)
@@ -160,65 +286,50 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                .padding(.top, 10)
             }
+        }
+    }
 
-            GridRow {
-                if settings.style == .aurora {
-                    Text("Aurora Colors")
-                    HStack(spacing: 10) {
-                        CompactColorWell(
-                            selection: colorBinding(\.auroraPalette.leading),
-                            accessibilityLabel: "Aurora leading color"
-                        )
-                        CompactColorWell(
-                            selection: colorBinding(\.auroraPalette.middle),
-                            accessibilityLabel: "Aurora middle color"
-                        )
-                        CompactColorWell(
-                            selection: colorBinding(\.auroraPalette.trailing),
-                            accessibilityLabel: "Aurora trailing color"
-                        )
-                    }
-                } else {
-                    Text("Color")
-                    CompactColorWell(
-                        selection: colorBinding(\.color),
-                        accessibilityLabel: "Effect color"
-                    )
+    @ViewBuilder
+    private var notificationMonitoringStatus: some View {
+        switch notificationEffectController.state {
+        case .stopped:
+            EmptyView()
+        case .active:
+            compactNotificationStatus(label: "Active", color: .green, symbol: "checkmark.circle.fill")
+        case .connecting:
+            compactNotificationStatus(label: "Connecting…", color: .blue, symbol: "arrow.trianglehead.2.clockwise.rotate.90")
+        case .permissionRequired, .unavailable:
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .accessibilityHidden(true)
+                    Text(notificationEffectController.statusMessage)
+                        .font(.caption)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-            }
-
-            GridRow {
-                Text("Opacity")
-                HStack {
-                    Slider(value: settingsBinding(\.opacity), in: 0.05...1)
-                    Text(settings.opacity.formatted(.percent.precision(.fractionLength(0))))
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                        .frame(width: 48, alignment: .trailing)
-                }
-            }
-
-            GridRow {
-                Text("Duration")
-                HStack {
-                    Slider(value: settingsBinding(\.duration), in: 0.1...1)
-                    Text("\(settings.duration, specifier: "%.2f")s")
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                        .frame(width: 48, alignment: .trailing)
-                }
-            }
-
-            GridRow {
-                Text("Style")
-                Picker("Style", selection: settingsBinding(\.style)) {
-                    ForEach(EffectSettings.Style.allCases) { style in
-                        Text(label(for: style)).tag(style)
+                if notificationEffectController.state == .permissionRequired {
+                    Button("Open Accessibility Settings") {
+                        notificationEffectController.openAccessibilitySettings()
                     }
                 }
-                .pickerStyle(.segmented)
             }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+        }
+    }
+
+    private func compactNotificationStatus(label: String, color: Color, symbol: String) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: symbol)
+                .foregroundStyle(color)
+                .accessibilityHidden(true)
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -264,7 +375,11 @@ struct ContentView: View {
         Binding(
             get: { environment.effectSettingsStore.settings.notificationEffectsEnabled },
             set: { enabled in
-                notificationEffectController.setEnabled(enabled)
+                if enabled, notificationEffectController.requiresAccessibilityAuthorization {
+                    isShowingAccessibilityExplanation = true
+                } else {
+                    notificationEffectController.setEnabled(enabled)
+                }
                 reload()
             }
         )
@@ -346,56 +461,14 @@ struct ContentView: View {
         }
     }
 
-    private var monitoringStatusLabel: String {
-        switch environment.clickMonitoringState {
-        case .stopped:
-            return "Stopped"
-        case .active:
-            return "Active"
-        case .unavailable:
-            return "Unavailable"
-        }
-    }
-
-    private var monitoringStatusDetail: String {
-        switch environment.clickMonitoringState {
-        case .stopped:
-            return "BarBop is not currently observing clicks."
-        case .active:
-            return "BarBop observes mouse clicks only to detect the menu bar. It does not record click history or keyboard input."
-        case .unavailable:
-            return "BarBop could not start system-wide mouse click monitoring. Quit and reopen the app, then check macOS privacy settings if the problem continues."
-        }
-    }
-
-    private var monitoringStatusSymbol: String {
-        switch environment.clickMonitoringState {
-        case .stopped:
-            return "pause.circle"
-        case .active:
-            return "checkmark.circle.fill"
-        case .unavailable:
-            return "exclamationmark.triangle.fill"
-        }
-    }
-
-    private var monitoringStatusColor: Color {
-        switch environment.clickMonitoringState {
-        case .stopped:
-            return .secondary
-        case .active:
-            return .green
-        case .unavailable:
-            return .orange
-        }
-    }
-
     private var testNotificationPermissionLabel: String {
         switch testNotificationController.authorizationStatus {
         case .notDetermined:
             return "Permission not requested"
         case .authorized:
             return "Permission allowed"
+        case .alertsDisabled:
+            return "Banners disabled"
         case .denied:
             return "Permission denied"
         }
@@ -407,34 +480,25 @@ struct ContentView: View {
             return .secondary
         case .authorized:
             return .green
-        case .denied:
+        case .alertsDisabled, .denied:
             return .orange
         }
     }
 
-    private var notificationStatusSymbol: String {
-        switch notificationEffectController.state {
-        case .active:
-            return "checkmark.circle.fill"
-        case .permissionRequired, .unavailable:
-            return "exclamationmark.triangle.fill"
-        case .connecting:
-            return "arrow.trianglehead.2.clockwise.rotate.90"
-        case .stopped:
-            return "pause.circle"
-        }
-    }
+}
 
-    private var notificationStatusColor: Color {
-        switch notificationEffectController.state {
-        case .active:
-            return .green
-        case .permissionRequired, .unavailable:
-            return .orange
-        case .connecting:
-            return .blue
-        case .stopped:
-            return .secondary
+private enum SettingsTab: String, CaseIterable, Identifiable {
+    case effects
+    case notifications
+
+    var id: Self { self }
+
+    var label: String {
+        switch self {
+        case .effects:
+            return "Effects"
+        case .notifications:
+            return "Notifications"
         }
     }
 }

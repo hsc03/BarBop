@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 import UserNotifications
@@ -5,6 +6,7 @@ import UserNotifications
 enum LocalNotificationAuthorizationStatus: Equatable {
     case notDetermined
     case authorized
+    case alertsDisabled
     case denied
 }
 
@@ -14,6 +16,19 @@ final class LocalTestNotificationController: ObservableObject {
         var authorizationStatus: () async -> LocalNotificationAuthorizationStatus
         var requestAuthorization: () async throws -> Bool
         var addRequest: (UNNotificationRequest) async throws -> Void
+        var openNotificationSettings: () -> Void
+
+        init(
+            authorizationStatus: @escaping () async -> LocalNotificationAuthorizationStatus,
+            requestAuthorization: @escaping () async throws -> Bool,
+            addRequest: @escaping (UNNotificationRequest) async throws -> Void,
+            openNotificationSettings: @escaping () -> Void = {}
+        ) {
+            self.authorizationStatus = authorizationStatus
+            self.requestAuthorization = requestAuthorization
+            self.addRequest = addRequest
+            self.openNotificationSettings = openNotificationSettings
+        }
 
         static let live = Dependencies(
             authorizationStatus: {
@@ -26,7 +41,9 @@ final class LocalTestNotificationController: ObservableObject {
                         case .denied:
                             status = .denied
                         case .authorized, .provisional, .ephemeral:
-                            status = .authorized
+                            status = settings.alertSetting == .enabled && settings.alertStyle != .none
+                                ? .authorized
+                                : .alertsDisabled
                         @unknown default:
                             status = .denied
                         }
@@ -55,6 +72,14 @@ final class LocalTestNotificationController: ObservableObject {
                         }
                     }
                 }
+            },
+            openNotificationSettings: {
+                guard let url = URL(
+                    string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension"
+                ) else {
+                    return
+                }
+                NSWorkspace.shared.open(url)
             }
         )
     }
@@ -64,6 +89,14 @@ final class LocalTestNotificationController: ObservableObject {
     @Published private(set) var statusMessage = "Notification permission has not been checked yet."
 
     private let dependencies: Dependencies
+
+    var requiresNotificationSettings: Bool {
+        authorizationStatus == .denied || authorizationStatus == .alertsDisabled
+    }
+
+    var canSendTestNotification: Bool {
+        !isSending && !requiresNotificationSettings
+    }
 
     init() {
         self.dependencies = .live
@@ -87,8 +120,16 @@ final class LocalTestNotificationController: ObservableObject {
         case .notDetermined:
             do {
                 if try await dependencies.requestAuthorization() {
-                    apply(.authorized)
-                    await scheduleTestNotification()
+                    let refreshedStatus = await dependencies.authorizationStatus()
+                    let effectiveStatus = refreshedStatus == .notDetermined
+                        ? .authorized
+                        : refreshedStatus
+                    apply(effectiveStatus)
+                    if effectiveStatus == .authorized {
+                        await scheduleTestNotification()
+                    } else {
+                        isSending = false
+                    }
                 } else {
                     apply(.denied)
                     isSending = false
@@ -99,9 +140,15 @@ final class LocalTestNotificationController: ObservableObject {
             }
         case .authorized:
             await scheduleTestNotification()
+        case .alertsDisabled:
+            isSending = false
         case .denied:
             isSending = false
         }
+    }
+
+    func openNotificationSettings() {
+        dependencies.openNotificationSettings()
     }
 
     private func scheduleTestNotification() async {
@@ -130,6 +177,8 @@ final class LocalTestNotificationController: ObservableObject {
             statusMessage = "Click Send Test Notification to request local notification permission."
         case .authorized:
             statusMessage = "BarBop can send local test notifications."
+        case .alertsDisabled:
+            statusMessage = "Notifications are allowed, but banners are disabled for BarBop. Enable an alert style in System Settings > Notifications > BarBop."
         case .denied:
             statusMessage = "Notifications are disabled for BarBop. Enable them in System Settings > Notifications > BarBop."
         }

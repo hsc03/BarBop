@@ -33,10 +33,13 @@ Branch: `develop`
 
 ## Settings Checks
 
-- [ ] Settings reports Click Monitoring as Active while the global mouse
-      monitor is installed.
-- [ ] The monitoring explanation says that keyboard input and click history
-      are not collected.
+- [ ] Normal click-monitoring state does not add a diagnostic card to Settings.
+- [ ] If the global mouse monitor cannot start, the Effects tab shows a wrapped
+      warning that recommends relaunching BarBop and checking privacy settings.
+- [ ] Effects and Notifications tabs switch without resizing the popover.
+- [ ] Only the tab content scrolls; the header and footer remain visible.
+- [ ] Troubleshooting is collapsed initially and reveals local notification
+      permission and the test notification controls when expanded.
 - [ ] Color changes are reflected on the next effect.
 - [ ] Style changes are reflected on the next effect.
 - [ ] Opacity changes are reflected on the next effect.
@@ -50,14 +53,20 @@ Branch: `develop`
 - [ ] Invalid stored settings recover to defaults without crashing.
 - [ ] Click Effects and Notification Effects can be enabled independently.
 - [ ] Without Accessibility approval, enabling Notification Effects returns
-      the toggle to off and shows the System Settings guidance.
+      the toggle to off, explains the requested access before the system
+      prompt, and shows the System Settings guidance.
 - [ ] After Accessibility approval and returning to BarBop, the pending
       Notification Effects request enables automatically and reports an active
       observer.
+- [ ] Revoking Accessibility while Notification Effects is active stops the
+      observer and turns the toggle off when BarBop next becomes active.
 - [ ] A visible test notification plays the currently selected solid or
       Aurora colors, opacity, duration, and style on the banner's display.
 - [ ] A notification does not trigger an effect when Notification Effects is
       off, and sending a test notification does not change either toggle.
+- [ ] If BarBop notification permission is denied or its alert style is set to
+      None, Troubleshooting does not claim a visible test was sent and offers
+      an Open Notification Settings button.
 - [ ] Follow Notification targets the display reported by the visible banner.
 - [ ] Main Display always targets the current macOS main display.
 - [ ] Each connected display can be selected by name and remains selected after

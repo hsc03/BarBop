@@ -458,6 +458,43 @@ struct BarBopTests {
         #expect(controller.state == .permissionRequired)
     }
 
+    @Test @MainActor func activeNotificationSettingDisablesWhenPermissionIsRevoked() {
+        let store = makeStore()
+        let renderer = FakeMenuBarEffectRenderer()
+        let coordinator = EffectCoordinator(renderer: renderer, settingsStore: store)
+        let detector = FakeNotificationBannerDetector()
+        var isTrusted = true
+        let controller = NotificationEffectController(
+            settingsStore: store,
+            effectCoordinator: coordinator,
+            cancelEffect: {},
+            dependencies: NotificationEffectController.Dependencies(
+                isTrusted: { isTrusted },
+                requestAccessibilityAccess: {},
+                screens: { [sampleScreen] },
+                uptime: { 20 },
+                makeDetector: { onEvent, onReset, onStateChange in
+                    detector.onEvent = onEvent
+                    detector.onReset = onReset
+                    detector.onStateChange = onStateChange
+                    return detector
+                }
+            )
+        )
+
+        controller.setEnabled(true)
+        #expect(store.settings.notificationEffectsEnabled)
+        #expect(controller.state == .active)
+
+        isTrusted = false
+        controller.refreshAccessibilityAuthorization()
+
+        #expect(!store.settings.notificationEffectsEnabled)
+        #expect(!controller.isAwaitingAccessibilityApproval)
+        #expect(detector.stopCount == 1)
+        #expect(controller.state == .permissionRequired)
+    }
+
     @Test @MainActor func notificationDetectorEventTargetsDisplayAndCurrentSettings() {
         let store = makeStore()
         var settings = store.settings
@@ -671,6 +708,30 @@ struct BarBopTests {
         #expect(permissionRequestCount == 0)
         #expect(addRequestCount == 1)
         #expect(controller.authorizationStatus == .authorized)
+    }
+
+    @Test @MainActor func testNotificationWithDisabledBannersDoesNotScheduleAndOpensSettings() async {
+        var addRequestCount = 0
+        var openSettingsCount = 0
+        let controller = LocalTestNotificationController(
+            dependencies: .init(
+                authorizationStatus: { .alertsDisabled },
+                requestAuthorization: { true },
+                addRequest: { _ in addRequestCount += 1 },
+                openNotificationSettings: { openSettingsCount += 1 }
+            )
+        )
+
+        await controller.refreshAuthorizationStatus()
+        await controller.sendTestNotification()
+        controller.openNotificationSettings()
+
+        #expect(controller.authorizationStatus == .alertsDisabled)
+        #expect(controller.requiresNotificationSettings)
+        #expect(!controller.canSendTestNotification)
+        #expect(controller.statusMessage.contains("banners are disabled"))
+        #expect(addRequestCount == 0)
+        #expect(openSettingsCount == 1)
     }
 
     @Test @MainActor func testNotificationDeniedDoesNotScheduleOrChangeEffectSettings() async {

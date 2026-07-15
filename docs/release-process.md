@@ -43,6 +43,7 @@ Release signing should satisfy:
 - Hardened Runtime enabled
 - Secure timestamp
 - No `get-task-allow` entitlement in the final public artifact
+- No unused file-access or sandbox entitlements
 - No private signing credentials committed to Git
 
 Recommended first pass:

@@ -115,9 +115,24 @@ final class NotificationEffectController: ObservableObject {
         detector.start()
     }
 
+    var requiresAccessibilityAuthorization: Bool {
+        !dependencies.isTrusted()
+    }
+
     func refreshAccessibilityAuthorization() {
+        let isTrusted = dependencies.isTrusted()
+
+        if settingsStore.settings.notificationEffectsEnabled, !isTrusted {
+            isAwaitingAccessibilityApproval = false
+            persistEnabled(false)
+            detector.stop()
+            state = .permissionRequired
+            statusMessage = accessibilityGuidance
+            return
+        }
+
         guard isAwaitingAccessibilityApproval else { return }
-        guard dependencies.isTrusted() else {
+        guard isTrusted else {
             state = .permissionRequired
             statusMessage = accessibilityGuidance
             return

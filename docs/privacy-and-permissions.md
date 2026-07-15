@@ -72,8 +72,9 @@ BarBop must continue to behave safely when permission is missing:
 - The app should not attempt private APIs or event injection as a workaround.
 
 Click monitoring does not proactively request Accessibility access. If its
-system-wide mouse monitor cannot be started, Settings shows an unavailable
-state and suggests relaunching the app and checking macOS privacy settings.
+system-wide mouse monitor cannot be started, the Effects tab shows a warning
+that suggests relaunching the app and checking macOS privacy settings. Normal
+click-monitoring status is not shown as a user-facing setting.
 
 BarBop requests Accessibility access only when the user turns on
 **Notification Effects (Experimental)**. It observes structural events from
@@ -83,6 +84,11 @@ identity, role, subrole, frame, parent depth, and derived display ID. It does
 not read or store notification titles, bodies, source app names, or button
 labels. It also does not access Notification Center databases, system logs,
 screenshots, pixels, OCR, or private APIs.
+
+Before macOS displays its Accessibility prompt, BarBop explains why the access
+is needed and which data is not inspected. If Accessibility access is revoked
+while BarBop is running, the app stops the observer and turns Notification
+Effects off the next time BarBop becomes active.
 
 If Accessibility access is missing, the notification effect toggle returns to
 off and Settings explains how to approve BarBop. When the user returns from
@@ -96,8 +102,13 @@ Developer ID signing and notarization. Hardened Runtime remains enabled.
 
 Local notification permission is separate from Accessibility access. BarBop
 requests notification permission only when the user chooses **Send Test
-Notification**. If permission is denied, Settings directs the user to System
-Settings > Notifications > BarBop and does not schedule a notification.
+Notification** in the collapsed Troubleshooting section. If permission is
+denied, Settings directs the user to System Settings > Notifications > BarBop
+and does not schedule a notification. BarBop also checks whether alerts are
+enabled and whether the selected alert style can show a visible banner or
+alert. It does not report a successful visible test when those settings are
+disabled. Focus modes and other macOS delivery policies can still suppress a
+banner even when the app-level settings allow one.
 
 ## Overlay Behavior
 
