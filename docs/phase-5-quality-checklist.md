@@ -79,7 +79,7 @@ Branch: `develop`
       the notification Display setting.
 - [x] The footer displays the installed version and a **Check for Updates…**
       button that is disabled until the updater is ready.
-- [ ] A previous notarized build discovers, verifies, installs, and relaunches
+- [x] A previous notarized build discovers, verifies, installs, and relaunches
       the next notarized build through Sparkle without losing settings.
 
 ## Documentation Checks

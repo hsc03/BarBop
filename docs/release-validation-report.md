@@ -1,6 +1,6 @@
 # Release Validation Report
 
-Date: 2026-07-15
+Date: 2026-07-16
 
 Branch: `develop`
 
@@ -22,6 +22,7 @@ remain release gates and are not marked complete by automated results.
 | Settings migrations | Passed | v1/v2 data migrates to v3 and invalid data recovers. |
 | Notification detector core | Passed | Structure filtering, display selection, deduplication, callback filtering, retry bounds, state, and latency aggregation covered. |
 | Display routing | Passed | Follow, main, specific, disconnected fallback, and all-display policies covered. |
+| Sparkle update controller | Passed | Version UI, updater startup, readiness gating, and manual checks are covered by the 48-test suite. |
 
 Command-line execution can emit unrelated CoreSimulator warnings for this
 macOS-only project. Record a new failure only when the build or test command
@@ -50,6 +51,14 @@ itself exits unsuccessfully.
   confirmed `AXGroup/AXNotificationCenterBanner` structure.
 - The Sandbox comparison could not register BarBop as an Accessibility client,
   so direct Developer ID distribution is required.
+- A real Sparkle update from notarized `0.1.0 (3)` to notarized `0.1.0 (4)`
+  passed using the public `v0.1.0-build4-test` prerelease and its EdDSA-signed
+  appcast. Sparkle downloaded, verified, installed, and relaunched the arm64
+  update. The installed app reported build 4, retained settings and
+  Accessibility behavior, passed strict nested code-signature verification,
+  was accepted by Gatekeeper as `Notarized Developer ID`, and retained a valid
+  stapled ticket. The public ZIP SHA-256 was
+  `156306648c385866d094c690ed268117f1ec8ba9eb97513344ec455d57c56e3d`.
 
 ## Pending Manual Release Gates
 
@@ -78,7 +87,7 @@ Automated gate: **Passed**
 
 Interactive reliability gate: **Pending**
 
-Signing and notarization gate: **Pending**
+Signing and notarization gate: **Passed for 0.1.0 (4)**
 
 The application may be pushed to the development repository, but a public
 release and Homebrew Cask must wait for all three gates.
