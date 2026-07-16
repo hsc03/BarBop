@@ -127,6 +127,8 @@ cask "barbop" do
   desc "Visual effects for macOS menu bar interactions and notifications"
   homepage "https://github.com/hsc03/BarBop"
 
+  auto_updates true
+
   depends_on arch: :arm64
   depends_on macos: ">= :tahoe"
 
@@ -220,6 +222,11 @@ For every new BarBop release:
    architecture, or system requirements changed.
 5. Repeat install, reinstall, uninstall, zap, style, and audit checks.
 6. Commit and push the tap update only after all checks pass.
+
+BarBop also supports Sparkle updates. Keep `auto_updates true` in the Cask so
+Homebrew knows the installed application can update itself. The Tap version and
+checksum must still be updated for users who prefer `brew upgrade` and for new
+installations.
 
 Never replace the ZIP attached to an existing version tag after publishing its
 checksum. If a release artifact is wrong, publish a new version and update the

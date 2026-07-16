@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         configureStatusItem()
         eventMonitor.start()
         environment.notificationEffectController.restoreSavedState()
+        environment.appUpdateController.start()
 
         DispatchQueue.main.async { [weak self] in
             self?.presentInitialSettingsIfNeeded()

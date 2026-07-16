@@ -95,12 +95,17 @@ display and automatically resumes the selected display when it reconnects.
 - Manual verification: `docs/phase-5-quality-checklist.md`
 - Release validation results: `docs/release-validation-report.md`
 - Personal Homebrew Tap distribution: `docs/personal-homebrew-tap.md`
+- In-app update distribution: `docs/update-distribution.md`
 
 ## Distribution Goal
 
 The release path targets a signed and notarized macOS app distributed through
 GitHub Releases first. Homebrew Cask support is planned after a release artifact
 and SHA-256 checksum are available.
+
+Signed in-app updates use Sparkle 2, an EdDSA-signed appcast hosted in this
+repository, and immutable notarized ZIP assets from GitHub Releases. Homebrew
+users may use either BarBop's update UI or `brew upgrade --cask barbop`.
 
 Notification banner observation requires Accessibility access and is not
 compatible with BarBop's tested App Sandbox build. BarBop therefore targets

@@ -12,6 +12,7 @@ specific passwords, or notary credentials.
 - Notarize the app with Apple's notary service.
 - Staple the notarization ticket to the app or distributable container.
 - Publish a GitHub Release with the artifact and SHA-256 checksum.
+- Generate and publish a signed Sparkle appcast for in-app updates.
 - Use the GitHub Release URL and checksum later for Homebrew Cask work.
 
 ## Local Release Artifact
@@ -115,11 +116,14 @@ to the app bundle before creating the final ZIP.
 - [ ] Notarize and staple.
 - [ ] Create final ZIP.
 - [ ] Generate SHA-256 checksum.
+- [ ] Generate and inspect the signed Sparkle appcast.
 - [ ] Draft GitHub Release notes.
 - [ ] Upload ZIP and checksum.
 - [ ] Verify the download URL.
 - [ ] Download the artifact from GitHub and launch it on a clean macOS account
       or machine.
+- [ ] Verify the previous notarized version installs the new version through
+      **Check for Updates…** and preserves settings and permissions.
 
 ## GitHub Release Notes Template
 
@@ -165,3 +169,6 @@ The first Homebrew distribution will use the separate public personal tap
 `hsc03/homebrew-tap`. Follow `docs/personal-homebrew-tap.md` for the repository
 layout, Cask template, validation commands, update policy, and completion
 criteria.
+
+Sparkle key handling, appcast generation, and end-to-end update verification
+are documented in `docs/update-distribution.md`.

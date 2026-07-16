@@ -58,7 +58,7 @@ current notification implementation.
 ## Validation Status
 
 - BarBop and NotificationObserverSpike Debug and Release builds have passed.
-- The full automated suite most recently passed 46 tests.
+- The full automated suite most recently passed 48 tests.
 - Settings migration, detector filtering and deduplication, permission gating,
   notification scheduling, display resolution, and multi-panel playback have
   automated coverage.

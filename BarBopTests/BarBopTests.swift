@@ -762,6 +762,50 @@ struct BarBopTests {
         #expect(store.settings == originalSettings)
     }
 
+    @Test @MainActor func appUpdateControllerStartsOnceAndChecksOnlyWhenReady() {
+        var startCount = 0
+        var checkCount = 0
+        var currentCanCheck = false
+        var observationHandler: ((Bool) -> Void)?
+        let controller = AppUpdateController(
+            dependencies: .init(
+                startUpdater: { startCount += 1 },
+                checkForUpdates: { checkCount += 1 },
+                canCheckForUpdates: { currentCanCheck },
+                observeCanCheckForUpdates: { handler in
+                    observationHandler = handler
+                    return {}
+                }
+            )
+        )
+
+        controller.checkForUpdates()
+        controller.start()
+        controller.start()
+
+        #expect(startCount == 1)
+        #expect(checkCount == 0)
+        #expect(!controller.canCheckForUpdates)
+
+        currentCanCheck = true
+        observationHandler?(true)
+        controller.checkForUpdates()
+
+        #expect(controller.canCheckForUpdates)
+        #expect(checkCount == 1)
+    }
+
+    @Test @MainActor func appUpdateControllerFormatsVersionAndBuild() {
+        #expect(
+            AppUpdateController.versionDescription(version: "0.1.0", build: "3")
+                == "Version 0.1.0 (3)"
+        )
+        #expect(
+            AppUpdateController.versionDescription(version: nil, build: nil)
+                == "Version — (—)"
+        )
+    }
+
     private var sampleScreen: ScreenGeometry {
         ScreenGeometry(
             id: 1,

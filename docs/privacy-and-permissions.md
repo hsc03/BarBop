@@ -10,10 +10,9 @@ BarBop observes mouse down events so it can determine whether a click happened
 inside a menu bar area. The app uses the current pointer location and the
 visible screen geometry to decide whether an effect should play.
 
-BarBop does not observe keyboard events. The menu bar settings popover shows whether the
-system-wide mouse event monitor was created successfully. This is an
-operational status, not a claim that a specific macOS privacy permission has
-been granted.
+BarBop does not observe keyboard events. The settings popover reports a click
+monitoring problem only if the system-wide mouse event monitor cannot be
+created; it does not present normal monitor state as a privacy permission.
 
 The app does not store click history.
 
@@ -52,7 +51,11 @@ BarBop does not collect or store:
 - Account information
 - Analytics events
 
-BarBop does not make network requests.
+BarBop makes HTTPS requests only when checking for application updates or
+downloading an update. Update metadata is read from BarBop's public GitHub
+repository and update archives are downloaded from GitHub Releases through
+Sparkle. BarBop does not send notification data, click data, settings, display
+identifiers, analytics, or a system profile with these requests.
 
 The settings popover can ask macOS to display one fixed local BarBop test
 notification. Its title and body are generated on the Mac, are not derived from

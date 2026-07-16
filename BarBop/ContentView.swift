@@ -16,6 +16,7 @@ struct ContentView: View {
     @ObservedObject private var environment = AppEnvironment.shared
     @ObservedObject private var testNotificationController = AppEnvironment.shared.localTestNotificationController
     @ObservedObject private var notificationEffectController = AppEnvironment.shared.notificationEffectController
+    @ObservedObject private var appUpdateController = AppEnvironment.shared.appUpdateController
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -70,10 +71,17 @@ struct ContentView: View {
         VStack(spacing: 12) {
             Divider()
             HStack {
-                Text("Changes are saved automatically.")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Changes are saved automatically.")
+                    Text(appUpdateController.versionDescription)
+                }
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
+                Button("Check for Updates…") {
+                    appUpdateController.checkForUpdates()
+                }
+                .disabled(!appUpdateController.canCheckForUpdates)
                 Button("Quit BarBop") {
                     NSApp.terminate(nil)
                 }

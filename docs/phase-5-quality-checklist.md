@@ -11,7 +11,7 @@ Branch: `develop`
 - [x] Release build succeeds.
 - [ ] Xcode Issue Navigator has no errors.
 - [x] Swift Testing unit tests compile.
-- [x] Command-line execution passes the full 44-test suite.
+- [x] Command-line execution passes the full 48-test suite.
 
 ## Manual App Checks
 
@@ -77,6 +77,10 @@ Branch: `develop`
       requiring an app restart.
 - [ ] A click effect still appears only on the clicked display regardless of
       the notification Display setting.
+- [x] The footer displays the installed version and a **Check for Updates…**
+      button that is disabled until the updater is ready.
+- [ ] A previous notarized build discovers, verifies, installs, and relaunches
+      the next notarized build through Sparkle without losing settings.
 
 ## Documentation Checks
 
