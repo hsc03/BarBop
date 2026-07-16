@@ -73,7 +73,7 @@ struct NotificationBannerStructureClassifier {
 }
 
 struct NotificationBannerEventClassifier {
-    static let layoutChangedNotification = "AXLayoutChanged"
+    static let layoutChangedNotification = NotificationBannerCallbackPolicy.layoutChangedNotification
 
     private let candidateClassifier = NotificationBannerCandidateClassifier()
     private let structureClassifier = NotificationBannerStructureClassifier()
@@ -95,6 +95,26 @@ struct NotificationBannerEventClassifier {
         }
 
         return candidateClassifier.classify(frame: frame, screens: screens)
+    }
+}
+
+struct NotificationBannerCallbackPolicy {
+    static let layoutChangedNotification = "AXLayoutChanged"
+
+    let maximumRetryCount: Int
+    let maximumPendingRetries: Int
+
+    init(maximumRetryCount: Int = 2, maximumPendingRetries: Int = 8) {
+        self.maximumRetryCount = maximumRetryCount
+        self.maximumPendingRetries = maximumPendingRetries
+    }
+
+    func shouldInspect(notificationName: String) -> Bool {
+        notificationName == Self.layoutChangedNotification
+    }
+
+    func shouldScheduleRetry(retryCount: Int, pendingRetryCount: Int) -> Bool {
+        retryCount < maximumRetryCount && pendingRetryCount < maximumPendingRetries
     }
 }
 

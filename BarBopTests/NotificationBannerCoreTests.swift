@@ -217,4 +217,24 @@ struct NotificationBannerCoreTests {
             screens: [primary]
         ) == nil)
     }
+
+    @Test func callbackPolicyInspectsOnlyLayoutChanges() {
+        let policy = NotificationBannerCallbackPolicy()
+
+        #expect(policy.shouldInspect(notificationName: "AXLayoutChanged"))
+        #expect(!policy.shouldInspect(notificationName: "AXCreated"))
+        #expect(!policy.shouldInspect(notificationName: "AXValueChanged"))
+    }
+
+    @Test func callbackPolicyBoundsRetriesAndPendingWork() {
+        let policy = NotificationBannerCallbackPolicy(
+            maximumRetryCount: 2,
+            maximumPendingRetries: 8
+        )
+
+        #expect(policy.shouldScheduleRetry(retryCount: 0, pendingRetryCount: 0))
+        #expect(policy.shouldScheduleRetry(retryCount: 1, pendingRetryCount: 7))
+        #expect(!policy.shouldScheduleRetry(retryCount: 2, pendingRetryCount: 0))
+        #expect(!policy.shouldScheduleRetry(retryCount: 0, pendingRetryCount: 8))
+    }
 }

@@ -18,9 +18,9 @@ remain release gates and are not marked complete by automated results.
 | BarBop Release build | Passed | Current release configuration compiles. |
 | NotificationObserverSpike Debug/Release | Passed | Development-only target compiles with its shared scheme. |
 | Test bundle compile | Passed | Swift Testing bundle compiles. |
-| Unit tests | Passed | Most recent run: 44 tests, 0 failures. |
+| Unit tests | Passed | Most recent run: 46 tests, 0 failures. |
 | Settings migrations | Passed | v1/v2 data migrates to v3 and invalid data recovers. |
-| Notification detector core | Passed | Structure filtering, display selection, deduplication, state, and latency aggregation covered. |
+| Notification detector core | Passed | Structure filtering, display selection, deduplication, callback filtering, retry bounds, state, and latency aggregation covered. |
 | Display routing | Passed | Follow, main, specific, disconnected fallback, and all-display policies covered. |
 
 Command-line execution can emit unrelated CoreSimulator warnings for this

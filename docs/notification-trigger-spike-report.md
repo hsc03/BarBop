@@ -34,7 +34,7 @@ the checked-in spike or BarBop entitlements.
 | Spike Release build | Passed | Ad-hoc signed local build completed after lifecycle cleanup changes. |
 | Existing BarBop Debug build | Passed | Existing target still compiles. |
 | Existing BarBop Release build | Passed | Existing target still compiles. |
-| Unit tests | Passed | 44 tests passed, including 12 detector-core tests, v1/v2-to-v3 migration, four notification display modes, disconnected-display fallback, multi-display rendering, permission/scheduling and alert-style handling, live Accessibility revocation, Accessibility gating, and configured-effect routing. |
+| Unit tests | Passed | 46 tests passed, including 14 detector-core tests covering callback filtering and retry bounds, v1/v2-to-v3 migration, four notification display modes, disconnected-display fallback, multi-display rendering, permission/scheduling and alert-style handling, live Accessibility revocation, Accessibility gating, and configured-effect routing. |
 | Candidate classification | Passed | Boundary rejection and largest cross-display intersection selection are covered by pure tests. |
 | Duplicate suppression | Passed | Same element and frame is suppressed for one second; different elements at the same frame remain distinct. |
 | State and diagnostics | Passed | Permission, process, observer states, reconnect counting, and average/maximum latency aggregation are covered by pure tests. |

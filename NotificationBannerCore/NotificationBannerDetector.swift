@@ -73,6 +73,7 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
     }
 
     nonisolated private static let notificationCenterBundleIdentifier = "com.apple.notificationcenterui"
+    private static let maximumTraversalNodeCount = 80
 
     @Published private(set) var state: NotificationBannerMonitorState = .stopped {
         didSet { onStateChange(state) }
@@ -92,12 +93,15 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
     private let candidateClassifier = NotificationBannerCandidateClassifier()
     private let structureClassifier = NotificationBannerStructureClassifier()
     private let eventClassifier = NotificationBannerEventClassifier()
+    private let callbackPolicy = NotificationBannerCallbackPolicy()
     private var observer: AXObserver?
     private var observedApplication: AXUIElement?
     private var registeredNotifications: [CFString] = []
     private var lifecycleTokens: [NSObjectProtocol] = []
     private var deduplicator = NotificationBannerDeduplicator(duplicateInterval: 0.15)
     private var isStarted = false
+    private var pendingRetryCount = 0
+    private var observationGeneration = 0
 
     init(
         dependencies: Dependencies? = nil,
@@ -185,6 +189,9 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
         guard state == .active else {
             return
         }
+        guard callbackPolicy.shouldInspect(notificationName: notificationName) else {
+            return
+        }
 
         let probe = elementProbe(for: element)
         let acceptedCandidate = probe.candidate.flatMap { candidate -> CandidateMetadata? in
@@ -211,9 +218,20 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
         }
 
         guard let candidate = acceptedCandidate else {
-            guard retryCount < 2 else { return }
+            guard callbackPolicy.shouldScheduleRetry(
+                retryCount: retryCount,
+                pendingRetryCount: pendingRetryCount
+            ) else {
+                return
+            }
+            pendingRetryCount += 1
+            let retryGeneration = observationGeneration
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                self?.receiveCreatedElement(
+                guard let self, self.observationGeneration == retryGeneration else {
+                    return
+                }
+                self.pendingRetryCount = max(0, self.pendingRetryCount - 1)
+                self.receiveCreatedElement(
                     element,
                     notificationName: notificationName,
                     callbackDate: callbackDate,
@@ -289,13 +307,7 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
 
         let application = AXUIElementCreateApplication(processIdentifier)
         let requestedNotifications: [CFString] = [
-            kAXWindowCreatedNotification as CFString,
-            kAXCreatedNotification as CFString,
             kAXLayoutChangedNotification as CFString,
-            kAXValueChangedNotification as CFString,
-            kAXRowCountChangedNotification as CFString,
-            kAXSelectedChildrenChangedNotification as CFString,
-            kAXResizedNotification as CFString,
         ]
         let refcon = Unmanaged.passUnretained(self).toOpaque()
         var successfulNotifications: [CFString] = []
@@ -327,6 +339,8 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
     }
 
     private func tearDownObserver() {
+        observationGeneration += 1
+        pendingRetryCount = 0
         guard let observer else {
             observedApplication = nil
             registeredNotifications = []
@@ -491,8 +505,11 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
         var visited: Set<NotificationBannerElementIdentity> = []
         let screens = dependencies.screens()
 
-        while !pending.isEmpty, snapshots.count < 80 {
+        var processedNodeCount = 0
+
+        while !pending.isEmpty, processedNodeCount < Self.maximumTraversalNodeCount {
             let current = pending.removeFirst()
+            processedNodeCount += 1
             guard current.depth <= 6 else { continue }
 
             let identity = NotificationBannerElementIdentity(
