@@ -689,9 +689,10 @@ struct BarBopTests {
         #expect(!controller.isSending)
     }
 
-    @Test @MainActor func testNotificationSchedulesImmediatelyWhenAuthorized() async {
+    @Test @MainActor func testNotificationSchedulesAfterPreparingBannerPresentationWhenAuthorized() async {
         var permissionRequestCount = 0
         var addRequestCount = 0
+        var presentationPreparationCount = 0
         let controller = LocalTestNotificationController(
             dependencies: .init(
                 authorizationStatus: { .authorized },
@@ -701,8 +702,11 @@ struct BarBopTests {
                 },
                 addRequest: { request in
                     addRequestCount += 1
-                    #expect(request.trigger == nil)
-                }
+                    let trigger = request.trigger as? UNTimeIntervalNotificationTrigger
+                    #expect(trigger?.timeInterval == 1)
+                    #expect(trigger?.repeats == false)
+                },
+                prepareForBannerPresentation: { presentationPreparationCount += 1 }
             )
         )
 
@@ -710,6 +714,7 @@ struct BarBopTests {
 
         #expect(permissionRequestCount == 0)
         #expect(addRequestCount == 1)
+        #expect(presentationPreparationCount == 1)
         #expect(controller.authorizationStatus == .authorized)
     }
 

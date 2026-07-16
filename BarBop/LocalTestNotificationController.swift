@@ -17,17 +17,20 @@ final class LocalTestNotificationController: ObservableObject {
         var requestAuthorization: () async throws -> Bool
         var addRequest: (UNNotificationRequest) async throws -> Void
         var openNotificationSettings: () -> Void
+        var prepareForBannerPresentation: () -> Void
 
         init(
             authorizationStatus: @escaping () async -> LocalNotificationAuthorizationStatus,
             requestAuthorization: @escaping () async throws -> Bool,
             addRequest: @escaping (UNNotificationRequest) async throws -> Void,
-            openNotificationSettings: @escaping () -> Void = {}
+            openNotificationSettings: @escaping () -> Void = {},
+            prepareForBannerPresentation: @escaping () -> Void = {}
         ) {
             self.authorizationStatus = authorizationStatus
             self.requestAuthorization = requestAuthorization
             self.addRequest = addRequest
             self.openNotificationSettings = openNotificationSettings
+            self.prepareForBannerPresentation = prepareForBannerPresentation
         }
 
         static let live = Dependencies(
@@ -80,6 +83,10 @@ final class LocalTestNotificationController: ObservableObject {
                     return
                 }
                 NSWorkspace.shared.open(url)
+            },
+            prepareForBannerPresentation: {
+                NSApp.keyWindow?.close()
+                NSApp.deactivate()
             }
         )
     }
@@ -159,11 +166,12 @@ final class LocalTestNotificationController: ObservableObject {
         let request = UNNotificationRequest(
             identifier: "BarBop.TestNotification.\(UUID().uuidString)",
             content: content,
-            trigger: nil
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         )
         do {
             try await dependencies.addRequest(request)
-            statusMessage = "Test notification sent. Look for a visible macOS banner."
+            statusMessage = "Test notification scheduled. Look for a visible macOS banner."
+            dependencies.prepareForBannerPresentation()
         } catch {
             statusMessage = "Could not send the test notification: \(error.localizedDescription)"
         }
