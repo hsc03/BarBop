@@ -34,13 +34,18 @@
 
 ## Install
 
-1. Download `BarBop.zip` from the
-   [latest GitHub Release](https://github.com/hsc03/BarBop/releases/latest).
-2. Unzip it and move `BarBop.app` to `/Applications`.
-3. Open BarBop and use its Aurora Bar icon in the macOS menu bar.
+Install with the personal Homebrew Tap:
 
-Release builds are signed with Developer ID and notarized by Apple. A personal
-Homebrew Tap will be added separately; no Homebrew package is published yet.
+```sh
+brew install --cask hsc03/tap/barbop
+```
+
+Or download `BarBop.zip` from the
+[latest GitHub Release](https://github.com/hsc03/BarBop/releases/latest),
+unzip it, and move `BarBop.app` to `/Applications`.
+
+Release builds are signed with Developer ID and notarized by Apple. Open BarBop
+and use its Aurora Bar icon in the macOS menu bar.
 
 ## Build from Source
 
