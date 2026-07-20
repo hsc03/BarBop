@@ -7,8 +7,10 @@ Branch: `develop`
 ## Summary
 
 Automated implementation checks pass for the current click and notification
-feature set. Interactive notification reliability and multi-display checks
-remain release gates and are not marked complete by automated results.
+feature set. The stable notification reliability gate failed because opening
+and closing Notification Center produced an intermittent false effect. The
+project owner accepted this known limitation only for a clearly labeled
+`0.1.0` Preview release.
 
 ## Automated Results
 
@@ -18,7 +20,7 @@ remain release gates and are not marked complete by automated results.
 | BarBop Release build | Passed | Current release configuration compiles. |
 | NotificationObserverSpike Debug/Release | Passed | Development-only target compiles with its shared scheme. |
 | Test bundle compile | Passed | Swift Testing bundle compiles. |
-| Unit tests | Passed | Most recent run: 51 tests, 0 failures. |
+| Unit tests | Passed | Most recent run: 59 tests, 0 failures. |
 | Settings migrations | Passed | v1/v2 data migrates to v3 and invalid data recovers. |
 | Notification detector core | Passed | Structure filtering, display selection, deduplication, callback filtering, retry bounds, state, and latency aggregation covered. |
 | Display routing | Passed | Follow, main, specific, disconnected fallback, and all-display policies covered. |
@@ -55,8 +57,17 @@ itself exits unsuccessfully.
   was 5 ms. Slack exposed a root `AXGroup/none` with a direct
   `AXGroup/AXNotificationCenterAlertStack` child, without requiring content
   attributes.
+- A later Preview regression segment at `11:56:54–11:56:56` detected the three
+  user-triggered Slack banners as three distinct events. The enclosing
+  non-isolated counter window reported a maximum 292 ms effect latency and also
+  contained three earlier unrelated detections, which remain covered by the
+  documented Preview false-positive limitation.
 - The Sandbox comparison could not register BarBop as an Accessibility client,
   so direct Developer ID distribution is required.
+- The final Notification Center open/close run produced 99 callbacks,
+  5 candidates, 1 false detection, and 4 removed duplicates. Effect latency was
+  291 ms. The zero-false-positive stable gate therefore failed even after
+  structure, identity, presentation, and timing refinements.
 - A real Sparkle update from notarized `0.1.0 (3)` to notarized `0.1.0 (4)`
   passed using the public `v0.1.0-build4-test` prerelease and its EdDSA-signed
   appcast. Sparkle downloaded, verified, installed, and relaunched the arm64
@@ -77,8 +88,9 @@ itself exits unsuccessfully.
 - Verify at least 19 of 20 visible external-app banners with one effect each.
 - Verify follow, main, specific, and all-display modes using at least two
   displays, including disconnection and reconnection.
-- Verify zero false positives during 10 minutes idle and ten Notification
-  Center open/close cycles.
+- Verify zero false positives during 10 minutes idle. The ten-cycle Notification
+  Center open/close check failed with one false effect and is an explicitly
+  accepted Preview limitation, not a passed stable gate.
 - Verify no effects for five notifications suppressed by Focus mode or app
   settings.
 - Verify rapid/grouped notifications, three sleep/wake cycles, and three
@@ -91,9 +103,15 @@ itself exits unsuccessfully.
 
 Automated gate: **Passed**
 
-Interactive reliability gate: **Pending**
+Stable interactive reliability gate: **Failed**
+
+Preview exception: **Accepted with disclosure and Notification Effects off by default**
 
 Signing and notarization gate: **Passed for 0.1.0 (4)**
 
-The application may be pushed to the development repository, but a public
-release and Homebrew Cask must wait for all three gates.
+Next release candidate: **0.1.0 (5); new archive and notarization required**
+
+The application may proceed only as a clearly labeled Preview release. Release
+notes, Settings, and README must disclose the Notification Center open/close
+false-positive. It must not be described as having passed the stable
+notification reliability gate.

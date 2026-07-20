@@ -204,6 +204,20 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Preview limitation", systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.orange)
+                Text("Opening or closing Notification Center may occasionally play an effect. This experimental behavior will be refined in future updates.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+
             if isShowingAccessibilityExplanation {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Accessibility Access")

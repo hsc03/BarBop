@@ -100,3 +100,7 @@ Branch: `develop`
   settings.
 - Command-line UI or test execution may be restricted by local sandboxing even
   when the app builds successfully.
+- Notification Effects are experimental in the `0.1.0` Preview. Opening or
+  closing Notification Center may occasionally play an effect; the final local
+  ten-cycle check produced one false effect. This is an accepted Preview
+  limitation and remains a failed stable reliability gate.

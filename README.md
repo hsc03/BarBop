@@ -5,6 +5,9 @@ menu bar clicks and visible notification banners. It does not modify system
 menus or third-party menu bar apps. Effects appear in temporary click-through
 overlays and use the display policy selected by the user.
 
+The `0.1.0` release is an early preview. Notification Effects remain
+experimental while their macOS Accessibility-based detection is refined.
+
 ## Current Features
 
 - Menu bar click detection
@@ -86,6 +89,19 @@ settings can still suppress a test banner.
 Notification display selection is stored by the display's stable UUID. If a
 selected display is disconnected, BarBop temporarily uses the current main
 display and automatically resumes the selected display when it reconnects.
+
+## Preview Limitation
+
+Opening or closing Notification Center can occasionally produce the same
+public Accessibility structure as a newly displayed notification banner. As a
+result, Notification Effects may rarely play while the user opens or closes
+Notification Center. The final local validation observed one false effect in
+ten open/close cycles. Notification Effects are off by default and clearly
+marked Experimental; users who prefer deterministic behavior can leave them
+disabled without affecting Click Effects.
+
+BarBop does not inspect notification contents or use private APIs, Notification
+Center databases, screenshots, or OCR to work around this limitation.
 
 ## Documentation
 

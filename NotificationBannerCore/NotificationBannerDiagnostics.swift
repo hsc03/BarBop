@@ -65,6 +65,22 @@ struct NotificationBannerAlertStackCandidateClassifier {
     private let candidateClassifier = NotificationBannerCandidateClassifier()
 
     func classify(
+        alertStackFrame: CGRect,
+        screens: [NotificationBannerScreen]
+    ) -> NotificationBannerCandidate? {
+        guard
+            alertStackFrame.width >= 300,
+            alertStackFrame.width <= 380,
+            alertStackFrame.height >= 40,
+            alertStackFrame.height <= 80
+        else {
+            return nil
+        }
+
+        return candidateClassifier.classify(frame: alertStackFrame, screens: screens)
+    }
+
+    func classify(
         containerFrame: CGRect,
         alertStackFrame: CGRect,
         screens: [NotificationBannerScreen]
@@ -74,10 +90,6 @@ struct NotificationBannerAlertStackCandidateClassifier {
             containerFrame.width <= 700,
             containerFrame.height >= 60,
             containerFrame.height <= 100,
-            alertStackFrame.width >= 300,
-            alertStackFrame.width <= 380,
-            alertStackFrame.height >= 40,
-            alertStackFrame.height <= 80,
             containerFrame.insetBy(dx: -1, dy: -1).contains(
                 CGPoint(x: alertStackFrame.midX, y: alertStackFrame.midY)
             )
@@ -85,7 +97,92 @@ struct NotificationBannerAlertStackCandidateClassifier {
             return nil
         }
 
-        return candidateClassifier.classify(frame: alertStackFrame, screens: screens)
+        return classify(alertStackFrame: alertStackFrame, screens: screens)
+    }
+}
+
+struct NotificationBannerAlertCandidateClassifier {
+    private let candidateClassifier = NotificationBannerCandidateClassifier()
+
+    func classify(
+        alertFrame: CGRect,
+        screens: [NotificationBannerScreen]
+    ) -> NotificationBannerCandidate? {
+        guard
+            alertFrame.width >= 300,
+            alertFrame.width <= 700,
+            alertFrame.height >= 40,
+            alertFrame.height <= 180
+        else {
+            return nil
+        }
+
+        return candidateClassifier.classify(frame: alertFrame, screens: screens)
+    }
+}
+
+struct NotificationCenterPresentationClassifier {
+    private let minimumExpandedWidthExcess: CGFloat
+
+    init(minimumExpandedWidthExcess: CGFloat = 240) {
+        self.minimumExpandedWidthExcess = minimumExpandedWidthExcess
+    }
+
+    func isExpanded(
+        ancestors: [NotificationBannerElementSnapshot],
+        surroundingElements: [NotificationBannerElementSnapshot] = [],
+        screen: NotificationBannerScreen
+    ) -> Bool {
+        if containsExpandedStructure(in: surroundingElements) {
+            return true
+        }
+
+        guard
+            let scrollArea = ancestors.first(where: { $0.role == "AXScrollArea" }),
+            let scrollAreaFrame = scrollArea.frame,
+            let containerFrame = ancestors.first(where: {
+                $0.parentDepth == scrollArea.parentDepth + 1 &&
+                    $0.role == "AXGroup" &&
+                    $0.subrole == nil
+            })?.frame
+        else {
+            return false
+        }
+
+        return containerFrame.width - scrollAreaFrame.width >= minimumExpandedWidthExcess
+    }
+
+    func containsExpandedStructure(
+        in elements: [NotificationBannerElementSnapshot]
+    ) -> Bool {
+        elements.contains(where: {
+            $0.role == "AXOpaqueProviderGroup" &&
+                $0.subrole == "AXOpaqueProviderGrid"
+        })
+    }
+}
+
+struct NotificationCenterPresentationState {
+    private let collapseSuppressionInterval: TimeInterval
+    private var suppressionUntil: TimeInterval = 0
+
+    init(collapseSuppressionInterval: TimeInterval = 0.75) {
+        self.collapseSuppressionInterval = collapseSuppressionInterval
+    }
+
+    mutating func observeExpandedStructure(at time: TimeInterval) {
+        suppressionUntil = max(
+            suppressionUntil,
+            time + collapseSuppressionInterval
+        )
+    }
+
+    func shouldSuppressStructuralCandidate(at time: TimeInterval) -> Bool {
+        time <= suppressionUntil
+    }
+
+    mutating func reset() {
+        suppressionUntil = 0
     }
 }
 
@@ -93,9 +190,12 @@ struct NotificationBannerStructureClassifier {
     static let bannerRole = "AXGroup"
     static let bannerSubrole = "AXNotificationCenterBanner"
     static let alertStackSubrole = "AXNotificationCenterAlertStack"
+    static let alertSubrole = "AXNotificationCenterAlert"
 
     enum Signature: Equatable {
         case notificationBanner
+        case alert
+        case alertStack
         case alertStackContainer
     }
 
@@ -122,6 +222,14 @@ struct NotificationBannerStructureClassifier {
 
         if subrole == Self.bannerSubrole {
             return .notificationBanner
+        }
+
+        if depth == 0, subrole == Self.alertStackSubrole {
+            return .alertStack
+        }
+
+        if depth == 0, subrole == Self.alertSubrole {
+            return .alert
         }
 
         if
@@ -156,11 +264,11 @@ struct NotificationBannerEventClassifier {
         }
 
         switch structure {
-        case .notificationBanner, .alertStackContainer:
-            break
+        case .notificationBanner, .alert, .alertStack:
+            return candidateClassifier.classify(frame: frame, screens: screens)
+        case .alertStackContainer:
+            return nil
         }
-
-        return candidateClassifier.classify(frame: frame, screens: screens)
     }
 }
 
@@ -169,10 +277,16 @@ struct NotificationBannerCallbackPolicy {
 
     let maximumRetryCount: Int
     let maximumPendingRetries: Int
+    let presentationValidationDelay: TimeInterval
 
-    init(maximumRetryCount: Int = 2, maximumPendingRetries: Int = 8) {
+    init(
+        maximumRetryCount: Int = 2,
+        maximumPendingRetries: Int = 8,
+        presentationValidationDelay: TimeInterval = 0.25
+    ) {
         self.maximumRetryCount = maximumRetryCount
         self.maximumPendingRetries = maximumPendingRetries
+        self.presentationValidationDelay = presentationValidationDelay
     }
 
     func shouldInspect(notificationName: String) -> Bool {
@@ -181,6 +295,14 @@ struct NotificationBannerCallbackPolicy {
 
     func shouldScheduleRetry(retryCount: Int, pendingRetryCount: Int) -> Bool {
         retryCount < maximumRetryCount && pendingRetryCount < maximumPendingRetries
+    }
+
+    func shouldDelayPresentationValidation(
+        structure: NotificationBannerStructureClassifier.Signature,
+        retryCount: Int
+    ) -> Bool {
+        guard retryCount == 0 else { return false }
+        return structure == .alert || structure == .alertStack
     }
 }
 
@@ -236,18 +358,41 @@ struct NotificationBannerDeduplicator {
     }
 }
 
+struct NotificationBannerElementDeduplicator {
+    private let duplicateInterval: TimeInterval
+    private var recentEvents: [NotificationBannerElementIdentity: TimeInterval] = [:]
+
+    init(duplicateInterval: TimeInterval = 2) {
+        self.duplicateInterval = duplicateInterval
+    }
+
+    mutating func shouldAccept(
+        elementIdentity: NotificationBannerElementIdentity,
+        at time: TimeInterval
+    ) -> Bool {
+        recentEvents = recentEvents.filter { time - $0.value <= duplicateInterval }
+
+        if let previousTime = recentEvents[elementIdentity], time - previousTime <= duplicateInterval {
+            return false
+        }
+
+        recentEvents[elementIdentity] = time
+        return true
+    }
+
+    mutating func reset() {
+        recentEvents.removeAll()
+    }
+}
+
 struct NotificationBannerAlertStackDeduplicator {
     private struct Key: Hashable {
         let screenID: CGDirectDisplayID
         let y: Int
-        let width: Int
-        let height: Int
 
         init(screenID: CGDirectDisplayID, frame: CGRect) {
             self.screenID = screenID
             y = Int(frame.origin.y.rounded())
-            width = Int(frame.width.rounded())
-            height = Int(frame.height.rounded())
         }
     }
 
@@ -276,6 +421,57 @@ struct NotificationBannerAlertStackDeduplicator {
 
     mutating func reset() {
         recentEvents.removeAll()
+    }
+}
+
+struct NotificationBannerStructuralDeduplicator {
+    private var elementDeduplicator: NotificationBannerElementDeduplicator
+    private var geometryDeduplicator: NotificationBannerAlertStackDeduplicator
+    private var ignoredElementIdentities: Set<NotificationBannerElementIdentity> = []
+
+    init(
+        elementDuplicateInterval: TimeInterval = 30,
+        geometryDuplicateInterval: TimeInterval = 0.4
+    ) {
+        elementDeduplicator = NotificationBannerElementDeduplicator(
+            duplicateInterval: elementDuplicateInterval
+        )
+        geometryDeduplicator = NotificationBannerAlertStackDeduplicator(
+            duplicateInterval: geometryDuplicateInterval
+        )
+    }
+
+    mutating func shouldAccept(
+        elementIdentity: NotificationBannerElementIdentity,
+        screenID: CGDirectDisplayID,
+        frame: CGRect,
+        at time: TimeInterval
+    ) -> Bool {
+        guard !ignoredElementIdentities.contains(elementIdentity) else {
+            return false
+        }
+        let isNewElement = elementDeduplicator.shouldAccept(
+            elementIdentity: elementIdentity,
+            at: time
+        )
+        let isNewGeometry = geometryDeduplicator.shouldAccept(
+            screenID: screenID,
+            frame: frame,
+            at: time
+        )
+        return isNewElement && isNewGeometry
+    }
+
+    mutating func ignoreExistingElement(
+        _ elementIdentity: NotificationBannerElementIdentity
+    ) {
+        ignoredElementIdentities.insert(elementIdentity)
+    }
+
+    mutating func reset() {
+        elementDeduplicator.reset()
+        geometryDeduplicator.reset()
+        ignoredElementIdentities.removeAll()
     }
 }
 
@@ -341,6 +537,7 @@ struct NotificationBannerDiagnostics: Equatable {
     private(set) var lastCallbackSnapshot: NotificationBannerCallbackSnapshot?
     private(set) var recentCallbackSnapshots: [NotificationBannerCallbackSnapshot] = []
     private(set) var lastStructuralEvent: NotificationBannerStructuralEvent?
+    private(set) var recentStructuralEvents: [NotificationBannerStructuralEvent] = []
     private var hasConnected = false
 
     mutating func recordCallback(_ snapshot: NotificationBannerCallbackSnapshot) {
@@ -372,6 +569,10 @@ struct NotificationBannerDiagnostics: Equatable {
     mutating func recordEvent(_ event: NotificationBannerStructuralEvent) {
         eventCount += 1
         lastStructuralEvent = event
+        recentStructuralEvents.append(event)
+        if recentStructuralEvents.count > 20 {
+            recentStructuralEvents.removeFirst(recentStructuralEvents.count - 20)
+        }
         latency.record(event.effectStartLatency)
     }
 
@@ -393,6 +594,7 @@ struct NotificationBannerDiagnostics: Equatable {
         lastCallbackSnapshot = nil
         recentCallbackSnapshots = []
         lastStructuralEvent = nil
+        recentStructuralEvents = []
     }
 }
 

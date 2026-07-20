@@ -67,6 +67,7 @@ struct NotificationObserverSpikeView: View {
             metricRow("Last parent depth", value: monitor.diagnostics.lastStructuralEvent.map { String($0.parentDepth) } ?? "None")
             metricRow("Last callback accepted", value: lastCallbackAcceptedDescription)
             metricRow("Last callback structure", value: lastCallbackStructureDescription)
+            metricRow("Recent detected events", value: recentDetectedEventsDescription)
             metricRow("Recent structural signatures", value: recentStructuralSignaturesDescription)
         }
     }
@@ -158,12 +159,21 @@ struct NotificationObserverSpikeView: View {
             .joined(separator: "\n")
     }
 
+    private var recentDetectedEventsDescription: String {
+        guard !monitor.diagnostics.recentStructuralEvents.isEmpty else { return "None" }
+        return monitor.diagnostics.recentStructuralEvents.map { event in
+            let time = event.callbackDate.formatted(date: .omitted, time: .standard)
+            return "\(time) id=\(event.elementIdentity.rawValue) \(event.role)/\(event.subrole ?? "none") \(format(event.frame)) display \(event.screenID)"
+        }
+        .joined(separator: "\n")
+    }
+
     private func structuralSignature(for snapshot: NotificationBannerCallbackSnapshot) -> String {
         let root = snapshot.elements.first.map { element in
-            "\(element.role)/\(element.subrole ?? "none") \(sizeDescription(element.frame))"
+            "id=\(element.elementIdentity.rawValue) \(element.role)/\(element.subrole ?? "none") \(sizeDescription(element.frame))"
         } ?? "no root"
         let children = snapshot.descendants.prefix(20).map { element in
-            "d\(element.parentDepth) \(element.role)/\(element.subrole ?? "none") \(sizeDescription(element.frame))"
+            "d\(element.parentDepth) id=\(element.elementIdentity.rawValue) \(element.role)/\(element.subrole ?? "none") \(sizeDescription(element.frame))"
         }
         return "\(snapshot.notificationName) accepted=\(snapshot.candidateAccepted) root=[\(root)] children=[\(children.joined(separator: "; "))]"
     }

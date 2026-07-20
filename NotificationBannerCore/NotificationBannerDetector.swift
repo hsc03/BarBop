@@ -93,6 +93,8 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
     private let dependencies: Dependencies
     private let candidateClassifier = NotificationBannerCandidateClassifier()
     private let alertStackCandidateClassifier = NotificationBannerAlertStackCandidateClassifier()
+    private let alertCandidateClassifier = NotificationBannerAlertCandidateClassifier()
+    private let presentationClassifier = NotificationCenterPresentationClassifier()
     private let structureClassifier = NotificationBannerStructureClassifier()
     private let eventClassifier = NotificationBannerEventClassifier()
     private let callbackPolicy = NotificationBannerCallbackPolicy()
@@ -101,7 +103,8 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
     private var registeredNotifications: [CFString] = []
     private var lifecycleTokens: [NSObjectProtocol] = []
     private var deduplicator = NotificationBannerDeduplicator(duplicateInterval: 1)
-    private var alertStackDeduplicator = NotificationBannerAlertStackDeduplicator()
+    private var structuralDeduplicator = NotificationBannerStructuralDeduplicator()
+    private var presentationState = NotificationCenterPresentationState()
     private var isStarted = false
     private var pendingRetryCount = 0
     private var observationGeneration = 0
@@ -180,7 +183,11 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
         diagnostics.resetCounters()
         lastEvent = nil
         deduplicator.reset()
-        alertStackDeduplicator.reset()
+        structuralDeduplicator.reset()
+        presentationState.reset()
+        if let observedApplication {
+            seedExistingStructuralElements(in: observedApplication)
+        }
     }
 
     fileprivate func receiveCreatedElement(
@@ -198,26 +205,105 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
         }
 
         let probe = elementProbe(for: element)
+        let callbackElements = probe.snapshots + probe.descendantSnapshots
+        if presentationClassifier.containsExpandedStructure(in: callbackElements) {
+            presentationState.observeExpandedStructure(at: dependencies.uptime())
+            for existingElement in callbackElements where
+                existingElement.role == NotificationBannerStructureClassifier.bannerRole &&
+                (existingElement.subrole == NotificationBannerStructureClassifier.alertSubrole ||
+                    existingElement.subrole == NotificationBannerStructureClassifier.alertStackSubrole)
+            {
+                structuralDeduplicator.ignoreExistingElement(
+                    existingElement.elementIdentity
+                )
+            }
+        }
         let acceptedCandidate = probe.candidate.flatMap { candidate -> CandidateMetadata? in
-            eventClassifier.classify(
+            guard eventClassifier.classify(
                 notificationName: notificationName,
                 structure: candidate.structure,
                 parentDepth: candidate.parentDepth,
                 frame: candidate.frame,
                 screens: dependencies.screens()
-            ) == nil ? nil : candidate
+            ) != nil else {
+                return nil
+            }
+
+            if candidate.structure == .alert || candidate.structure == .alertStack {
+                guard !presentationState.shouldSuppressStructuralCandidate(
+                    at: dependencies.uptime()
+                ) else {
+                    structuralDeduplicator.ignoreExistingElement(
+                        candidate.elementIdentity
+                    )
+                    return nil
+                }
+                let screens = dependencies.screens()
+                guard let screen = screens.first(where: { $0.id == candidate.screenID }) else {
+                    return nil
+                }
+                let presentationContext = presentationContextSnapshots(
+                    of: element,
+                    screens: screens
+                )
+                guard !presentationClassifier.isExpanded(
+                    ancestors: presentationContext.ancestors,
+                    surroundingElements: presentationContext.surroundingElements,
+                    screen: screen
+                ) else {
+                    structuralDeduplicator.ignoreExistingElement(
+                        candidate.elementIdentity
+                    )
+                    return nil
+                }
+            }
+
+            return candidate
         }
+        let requiresPresentationValidation = acceptedCandidate.map {
+            callbackPolicy.shouldDelayPresentationValidation(
+                structure: $0.structure,
+                retryCount: retryCount
+            )
+        } ?? false
         let callbackSnapshot = NotificationBannerCallbackSnapshot(
             notificationName: notificationName,
             callbackDate: callbackDate,
             elements: probe.snapshots,
             descendants: probe.descendantSnapshots,
-            candidateAccepted: acceptedCandidate != nil
+            candidateAccepted: acceptedCandidate != nil && !requiresPresentationValidation
         )
         if retryCount == 0 {
             diagnostics.recordCallback(callbackSnapshot)
         } else {
             diagnostics.updateLastCallback(callbackSnapshot)
+        }
+
+        if requiresPresentationValidation {
+            guard callbackPolicy.shouldScheduleRetry(
+                retryCount: retryCount,
+                pendingRetryCount: pendingRetryCount
+            ) else {
+                return
+            }
+            pendingRetryCount += 1
+            let retryGeneration = observationGeneration
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + callbackPolicy.presentationValidationDelay
+            ) { [weak self] in
+                guard let self, self.observationGeneration == retryGeneration else {
+                    return
+                }
+                self.pendingRetryCount = max(0, self.pendingRetryCount - 1)
+                self.receiveCreatedElement(
+                    element,
+                    notificationName: notificationName,
+                    callbackDate: callbackDate,
+                    callbackUptime: callbackUptime,
+                    retryCount: retryCount + 1
+                )
+            }
+            return
         }
 
         guard let candidate = acceptedCandidate else {
@@ -255,12 +341,15 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
                 frame: candidate.frame,
                 at: now
             )
-        case .alertStackContainer:
-            shouldAccept = alertStackDeduplicator.shouldAccept(
+        case .alert, .alertStack:
+            shouldAccept = structuralDeduplicator.shouldAccept(
+                elementIdentity: candidate.elementIdentity,
                 screenID: candidate.screenID,
                 frame: candidate.frame,
                 at: now
             )
+        case .alertStackContainer:
+            shouldAccept = false
         }
         guard shouldAccept else {
             diagnostics.recordDuplicate()
@@ -344,12 +433,24 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
         observer = newObserver
         observedApplication = application
         registeredNotifications = successfulNotifications
+        seedExistingStructuralElements(in: application)
         diagnostics.registeredNotificationNames = successfulNotifications
             .map { $0 as String }
             .sorted()
         diagnostics.recordConnectionSuccess()
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(newObserver), .commonModes)
         statusDetail = "Connected to com.apple.notificationcenterui. Only visible structural creation events are inspected."
+    }
+
+    private func seedExistingStructuralElements(in application: AXUIElement) {
+        let existingElements = descendantProbe(of: application).snapshots.filter {
+            $0.role == NotificationBannerStructureClassifier.bannerRole &&
+                ($0.subrole == NotificationBannerStructureClassifier.alertSubrole ||
+                    $0.subrole == NotificationBannerStructureClassifier.alertStackSubrole)
+        }
+        for element in existingElements {
+            structuralDeduplicator.ignoreExistingElement(element.elementIdentity)
+        }
     }
 
     private func tearDownObserver() {
@@ -499,6 +600,64 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
             }
 
             if
+                structureClassifier.signature(
+                    role: role,
+                    subrole: subrole,
+                    depth: parentDepth,
+                    directChildRole: nil,
+                    directChildSubrole: nil
+                ) == .alertStack,
+                let alertStackFrame = candidateFrame,
+                let classified = alertStackCandidateClassifier.classify(
+                    alertStackFrame: alertStackFrame,
+                    screens: screens
+                )
+            {
+                return ElementProbe(
+                    candidate: CandidateMetadata(
+                        frame: classified.frame,
+                        screenID: classified.screenID,
+                        elementIdentity: identity,
+                        role: role,
+                        subrole: subrole,
+                        parentDepth: parentDepth,
+                        structure: .alertStack
+                    ),
+                    snapshots: snapshots,
+                    descendantSnapshots: descendantProbe.snapshots
+                )
+            }
+
+            if
+                structureClassifier.signature(
+                    role: role,
+                    subrole: subrole,
+                    depth: parentDepth,
+                    directChildRole: nil,
+                    directChildSubrole: nil
+                ) == .alert,
+                let alertFrame = candidateFrame,
+                let classified = alertCandidateClassifier.classify(
+                    alertFrame: alertFrame,
+                    screens: screens
+                )
+            {
+                return ElementProbe(
+                    candidate: CandidateMetadata(
+                        frame: classified.frame,
+                        screenID: classified.screenID,
+                        elementIdentity: identity,
+                        role: role,
+                        subrole: subrole,
+                        parentDepth: parentDepth,
+                        structure: .alert
+                    ),
+                    snapshots: snapshots,
+                    descendantSnapshots: descendantProbe.snapshots
+                )
+            }
+
+            if
                 parentDepth == 0,
                 let directAlertStack = descendantProbe.snapshots.first(where: {
                     $0.parentDepth == 1 &&
@@ -543,6 +702,48 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
             snapshots: snapshots,
             descendantSnapshots: descendantProbe.snapshots
         )
+    }
+
+    private func presentationContextSnapshots(
+        of element: AXUIElement,
+        screens: [NotificationBannerScreen]
+    ) -> (
+        ancestors: [NotificationBannerElementSnapshot],
+        surroundingElements: [NotificationBannerElementSnapshot]
+    ) {
+        var current: AXUIElement? = element
+        var snapshots: [NotificationBannerElementSnapshot] = []
+        var scrollAreaElement: AXUIElement?
+
+        for parentDepth in 0..<7 {
+            guard let candidate = current else { break }
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: candidate) ?? "unknown"
+            let subrole = stringAttribute(kAXSubroleAttribute as CFString, from: candidate)
+            let identity = NotificationBannerElementIdentity(
+                rawValue: Int(truncatingIfNeeded: CFHash(candidate))
+            )
+            let candidateFrame = frame(of: candidate)
+            snapshots.append(
+                NotificationBannerElementSnapshot(
+                    elementIdentity: identity,
+                    role: role,
+                    subrole: subrole,
+                    parentDepth: parentDepth,
+                    frame: candidateFrame,
+                    screenID: candidateFrame.flatMap {
+                        candidateClassifier.screenID(for: $0, screens: screens)
+                    }
+                )
+            )
+            if role == "AXScrollArea" {
+                scrollAreaElement = candidate
+            }
+            current = elementAttribute(kAXParentAttribute as CFString, from: candidate)
+        }
+
+        let surroundingElements = scrollAreaElement
+            .map { descendantProbe(of: $0).snapshots } ?? []
+        return (snapshots, surroundingElements)
     }
 
     private func descendantProbe(of root: AXUIElement) -> DescendantProbe {

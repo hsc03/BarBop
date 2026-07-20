@@ -2,7 +2,7 @@
 
 Date: 2026-07-20
 
-Status: Integration validated; release reliability validation pending
+Status: No-Go — Notification Center presentation cannot be distinguished reliably
 
 ## Goal
 
@@ -34,7 +34,7 @@ the checked-in spike or BarBop entitlements.
 | Spike Release build | Passed | Ad-hoc signed local build completed after lifecycle cleanup changes. |
 | Existing BarBop Debug build | Passed | Existing target still compiles. |
 | Existing BarBop Release build | Passed | Existing target still compiles. |
-| Unit tests | Passed | 51 tests passed, including detector-core coverage for the native banner and Slack alert-stack structures, animation duplicate suppression, callback filtering and retry bounds, v1/v2-to-v3 migration, four notification display modes, disconnected-display fallback, multi-display rendering, permission/scheduling and alert-style handling, live Accessibility revocation, Accessibility gating, configured-effect routing, and update-controller behavior. |
+| Unit tests | Passed | 59 tests passed, including detector-core coverage for native banners and Slack alert-stack structures, expanded Notification Center structure classification, existing-element suppression, collapse-state timing, animation duplicate suppression, callback filtering and retry bounds, v1/v2-to-v3 migration, display routing, permission/scheduling, Accessibility gating, configured-effect routing, and update-controller behavior. |
 | Candidate classification | Passed | Boundary rejection and largest cross-display intersection selection are covered by pure tests. |
 | Duplicate suppression | Passed | Native banners suppress repeated callbacks for the same element and frame for one second. Slack alert-stack entrance animation suppresses repeated geometry callbacks for 0.4 seconds while preserving different screens and vertical positions. |
 | State and diagnostics | Passed | Permission, process, observer states, reconnect counting, and average/maximum latency aggregation are covered by pure tests. |
@@ -99,14 +99,15 @@ ancestor chain. Rejected callbacks remain visible without reading content.
 | Secondary display targeting | 10 | At least 95% correct display | Pending | Pending |
 | User-selected display targeting | 10 per mode | Follow, main, specific, and all-display policies match Settings | Pending | Pending |
 | Idle false positives | 10 minutes | 0 effects | Pending | Pending |
-| Open and close Notification Center | 10 cycles | 0 effects | Pending | Pending |
+| Open and close Notification Center | 10 cycles | 0 effects | Final run: 99 callbacks, 5 candidates, 1 detected false-positive, 4 duplicates removed; effect latency 291 ms. Earlier refinements also produced 25, 12, 1, 1, and 2 false-positive detections. | Failed |
 | Focus mode suppressed notifications | 5 | 0 effects | Pending | Pending |
 | Rapid and grouped notifications | 10 | No duplicate effects or stuck panel | Pending | Pending |
 | Sleep and wake | 3 cycles | Observer reconnects | Pending | Pending |
 | Notification Center process restart | 3 cycles | Observer reconnects | Pending | Pending |
 | Detection-to-effect latency | 20 | Maximum 500 ms | Pending | Pending |
 | BarBop local test banners | 5 | 5 visible banners, each detected exactly once | The product-side visual run passed 5/5 at manual two-second intervals with one effect on all three displays and no residual panel. A later product-only cold start passed after stale TCC entries were reset: the saved yellow Flash effect appeared on all three displays without a preceding ordinary menu bar click. The isolated spike rerun was not countable: approximately five requests produced 6 distinct candidates / 6 detections / 0 duplicates because macOS delivered an earlier delayed local request in the same run; average latency was 24 ms and maximum latency was 67 ms. | Product visual pass; exact isolated 5/5 spike count pending |
-| Slack example banner | 1 | One effect for one visible banner | 12 callbacks, 3 structural candidates, 1 detection, 2 animation duplicates removed; 5 ms effect latency. | Passed as a structural regression sample; external 20-banner gate remains pending |
+| Slack example banner | 1 | One effect for one visible banner | Earlier isolated sample: 12 callbacks, 3 structural candidates, 1 detection, 2 animation duplicates removed; 5 ms effect latency. | Passed as a structural regression sample; external 20-banner gate remains pending |
+| Slack Preview regression | 3 | Three visible banners, one effect each, maximum 500 ms | The user-triggered `11:56:54–11:56:56` segment produced three distinct structural events and three detections. The full non-isolated counter window contained three earlier unrelated detections; its maximum latency was 292 ms. | Passed for the isolated three-event segment; known false-positive limitation remains |
 | Sandbox observer attachment | 1 connection | Permission granted and observer active | BarBop did not appear in Accessibility | Failed |
 | Sandbox visible banners | 5 | 5 detected, one effect each | Could not start because permission registration failed | Failed |
 
@@ -134,37 +135,57 @@ display IDs. Do not paste notification content into this report.
   structural candidates, 1 detection, 2 duplicates removed, 5 ms average and
   maximum effect latency. The three candidates were repeated callbacks during
   one banner's horizontal entrance animation.
+- Latest Preview regression: the exact user-triggered segment from
+  `11:56:54` through `11:56:56` contained three distinct root Alert/AlertStack
+  identities and three detections. The full counter window reported 20
+  callbacks, 9 candidates, 6 detections, 3 duplicates, 180 ms average latency,
+  and 292 ms maximum latency because three earlier unrelated structural events
+  occurred before the requested Slack sends. Only the exact three-event segment
+  is counted as the Slack regression result.
 - Rejected structural callbacks included full-screen
   `AXWindow/AXSystemDialog` roots and `AXScrollArea` roots containing the banner
   as a descendant. Restricting acceptance to the banner callback root removes
   those duplicate structural paths without reading content.
+- Expanded Notification Center presentations exposed an
+  `AXOpaqueProviderGroup/AXOpaqueProviderGrid` descendant, but the presentation
+  transition also emitted a root `AXGroup/AXNotificationCenterAlertStack` with
+  the same banner-sized frame used by genuine visible notifications. Width
+  checks, expanded-structure checks, persistent existing-element suppression,
+  a 250 ms structural recheck, and a 750 ms collapse suppression window reduced
+  but did not eliminate the false positive.
+- The final false-positive frame was approximately `344×57` at the top of
+  display ID 1. Its role, subrole, root depth, event kind, frame, and timing were
+  not stably distinguishable from the accepted Slack banner structure without
+  consulting prohibited content or private implementation details.
 - Multi-display coordinate notes: display ID 1 was observed in the latest run;
   the second-display routing threshold remains pending.
 
-The classifier now requires the confirmed role, subrole, callback-root depth,
-event kind, size, and upper-screen region. Content attributes are not consulted.
-The structure gate is suitable for continued product validation, but the final
-decision still depends on the complete false-positive, external-app,
-multi-display, Focus mode, sleep/wake, and Sandbox runtime matrix.
+The classifier requires the confirmed role, subrole, callback-root depth,
+event kind, size, upper-screen region, and presentation-state checks. Content
+attributes are not consulted. The structure gate nevertheless failed the
+zero-false-positive requirement, so the remaining release matrix cannot convert
+this spike to a Go decision.
 
 ## Decision
 
-Current integration decision: **Go — direct distribution required**
+Current integration decision: **No-Go**
 
-Current release decision: **Pending interactive reliability validation**
+Stable release decision: **Blocked for the notification-enabled product**
 
-The automatic implementation, exact structure gate, and initial product
-integration gate have passed. The Sandbox runtime could not register BarBop as
-an Accessibility client, while the non-Sandbox spike registered and observed
-the confirmed structure. Distribution therefore requires a directly signed and
-notarized build rather than the Mac App Store. Genuine external notifications,
-Focus mode behavior, idle false positives, two-display routing, sleep/wake, and
-Notification Center restarts remain release gates and must not be represented
-as passed until their results are recorded above.
+Preview release decision: **Accepted with a documented known limitation**
 
-Mark the release **No-Go** if validation requires notification content,
-Notification Center database access, screen capture/OCR, private APIs, or if
-detection and false-positive thresholds are not met. Mark the release **Go**
-only after every required scenario passes in a normal interactive macOS
-session. The existing Sandbox comparison failure fixes the distribution path
-as direct Developer ID distribution for this implementation.
+The public Accessibility structure does not reliably distinguish a genuine
+visible banner from Notification Center's own open/close presentation. The
+final 10-cycle run produced one false effect, violating the required zero-false-
+positive threshold after multiple structure-only refinements. No notification
+content, database access, screen capture/OCR, private API, or private
+entitlement was used or will be introduced to bypass this result.
+
+BarBop must not represent the current system-wide notification effect as a
+stable or reliability-validated feature. The project owner accepted a limited
+`0.1.0` Preview distribution with Notification Effects marked Experimental,
+off by default, and the Notification Center open/close false-positive disclosed
+in Settings, README, and release notes. A future stable designation still
+requires the zero-false-positive gate or a reliable public macOS signal. The
+diagnostic spike may remain as development evidence but is not part of the
+distributed app.
