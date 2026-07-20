@@ -12,9 +12,8 @@
 ![BarBop settings popover](docs/assets/settings-popover.png)
 
 > [!IMPORTANT]
-> BarBop is currently a source preview. There is no supported stable binary or
-> Homebrew package yet. Notification Effects are experimental and off by
-> default.
+> Notification Effects are experimental and off by default. See the documented
+> limitation below before enabling them.
 
 ## Features
 
@@ -32,6 +31,16 @@
 - macOS 26.5 or later
 - Apple silicon
 - Xcode 26.6 or later when building from source
+
+## Install
+
+1. Download `BarBop.zip` from the
+   [latest GitHub Release](https://github.com/hsc03/BarBop/releases/latest).
+2. Unzip it and move `BarBop.app` to `/Applications`.
+3. Open BarBop and use its Aurora Bar icon in the macOS menu bar.
+
+Release builds are signed with Developer ID and notarized by Apple. A personal
+Homebrew Tap will be added separately; no Homebrew package is published yet.
 
 ## Build from Source
 
@@ -64,8 +73,8 @@ the attached settings popover.
 - **Effects** controls click effects and the appearance shared by both triggers.
 - **Notifications** controls the experimental notification trigger and its
   target display.
-- **Troubleshooting** can send one fixed local test notification without
-  enabling Notification Effects.
+- **Test Notification & Troubleshooting** can send one fixed local test
+  notification without enabling Notification Effects.
 
 Click Effects work independently of Notification Effects. Notification Effects
 react only to banners macOS actually displays; Focus modes and per-app delivery

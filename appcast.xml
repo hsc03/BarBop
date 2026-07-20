@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>BarBop</title>
+        <item>
+            <title>0.1.0</title>
+            <pubDate>Mon, 20 Jul 2026 14:41:48 +0900</pubDate>
+            <link>https://github.com/hsc03/BarBop</link>
+            <sparkle:version>6</sparkle:version>
+            <sparkle:shortVersionString>0.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.5</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/hsc03/BarBop/releases/download/v0.1.0/BarBop.zip" length="2790249" type="application/octet-stream" sparkle:edSignature="s0fXGvizldJpYdBSLzuvywIej1LrAwq7Plpf53X/Phf9cFf60a7sTilzqa+jtyWbPpDRZTDUjynyCdRujFUFAA=="/>
+        </item>
+    </channel>
+</rss>
