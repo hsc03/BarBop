@@ -3,6 +3,16 @@
     <channel>
         <title>BarBop</title>
         <item>
+            <title>0.1.1</title>
+            <pubDate>Mon, 20 Jul 2026 16:42:48 +0900</pubDate>
+            <link>https://github.com/hsc03/BarBop</link>
+            <sparkle:version>8</sparkle:version>
+            <sparkle:shortVersionString>0.1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.5</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/hsc03/BarBop/releases/download/v0.1.1/BarBop.zip" length="2817411" type="application/octet-stream" sparkle:edSignature="IznaR744py7PgVkoO1glaisUUVegLzdQDatIPet36k1im6cZFGTKP4hL7xj/7ddoWVr0Y1vNgOKQqCxCrtu+Cg=="/>
+        </item>
+        <item>
             <title>0.1.0</title>
             <pubDate>Mon, 20 Jul 2026 14:41:48 +0900</pubDate>
             <link>https://github.com/hsc03/BarBop</link>
