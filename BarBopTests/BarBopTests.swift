@@ -755,6 +755,86 @@ struct BarBopTests {
         #expect(store.settings == originalSettings)
     }
 
+    @Test @MainActor func launchAtLoginRegistersAndReflectsSystemStatus() async {
+        var currentStatus = LaunchAtLoginStatus.disabled
+        var registerCount = 0
+        let controller = LaunchAtLoginController(
+            dependencies: .init(
+                status: { currentStatus },
+                register: {
+                    registerCount += 1
+                    currentStatus = .enabled
+                },
+                unregister: {},
+                openLoginItemsSettings: {}
+            )
+        )
+
+        await controller.setEnabled(true)
+
+        #expect(registerCount == 1)
+        #expect(controller.status == .enabled)
+        #expect(controller.isEnabled)
+        #expect(controller.errorMessage == nil)
+    }
+
+    @Test @MainActor func launchAtLoginUnregistersAndReflectsSystemStatus() async {
+        var currentStatus = LaunchAtLoginStatus.enabled
+        var unregisterCount = 0
+        let controller = LaunchAtLoginController(
+            dependencies: .init(
+                status: { currentStatus },
+                register: {},
+                unregister: {
+                    unregisterCount += 1
+                    currentStatus = .disabled
+                },
+                openLoginItemsSettings: {}
+            )
+        )
+
+        await controller.setEnabled(false)
+
+        #expect(unregisterCount == 1)
+        #expect(controller.status == .disabled)
+        #expect(!controller.isEnabled)
+    }
+
+    @Test @MainActor func launchAtLoginApprovalIsEnabledAndCanOpenSettings() {
+        var openSettingsCount = 0
+        let controller = LaunchAtLoginController(
+            dependencies: .init(
+                status: { .requiresApproval },
+                register: {},
+                unregister: {},
+                openLoginItemsSettings: { openSettingsCount += 1 }
+            )
+        )
+
+        controller.openLoginItemsSettings()
+
+        #expect(openSettingsCount == 1)
+        #expect(controller.status == .requiresApproval)
+        #expect(controller.isEnabled)
+    }
+
+    @Test @MainActor func launchAtLoginRegistrationFailureKeepsDisabledAndShowsError() async {
+        let controller = LaunchAtLoginController(
+            dependencies: .init(
+                status: { .disabled },
+                register: { throw CocoaError(.fileWriteUnknown) },
+                unregister: {},
+                openLoginItemsSettings: {}
+            )
+        )
+
+        await controller.setEnabled(true)
+
+        #expect(controller.status == .disabled)
+        #expect(!controller.isEnabled)
+        #expect(controller.errorMessage?.contains("could not be added") == true)
+    }
+
     @Test @MainActor func appUpdateControllerStartsOnceAndChecksOnlyWhenReady() {
         var startCount = 0
         var checkCount = 0

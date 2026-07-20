@@ -34,6 +34,11 @@ Specific displays are persisted by UUID rather than transient display ID. If a
 selected display is disconnected, notification effects temporarily use the
 main display and resume the saved target when it reconnects.
 
+`LaunchAtLoginController` uses `SMAppService.mainApp` as the source of truth for
+the login-item state. The setting does not duplicate that state in
+`UserDefaults`, so changes made in System Settings are reflected when BarBop
+becomes active again.
+
 ## Notification Detection Boundary
 
 The detector reads only Accessibility event type, element identity, role,

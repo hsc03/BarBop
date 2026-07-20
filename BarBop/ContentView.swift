@@ -10,6 +10,7 @@ struct ContentView: View {
     @ObservedObject private var testNotificationController = AppEnvironment.shared.localTestNotificationController
     @ObservedObject private var notificationEffectController = AppEnvironment.shared.notificationEffectController
     @ObservedObject private var appUpdateController = AppEnvironment.shared.appUpdateController
+    @ObservedObject private var launchAtLoginController = AppEnvironment.shared.launchAtLoginController
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -38,10 +39,12 @@ struct ContentView: View {
         .task {
             reload()
             notificationEffectController.refreshScreens()
+            launchAtLoginController.refresh()
             await testNotificationController.refreshAuthorizationStatus()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             notificationEffectController.refreshAccessibilityAuthorization()
+            launchAtLoginController.refresh()
             reload()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
@@ -189,6 +192,32 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                             .frame(width: 48, alignment: .trailing)
                     }
+                }
+            }
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("Launch BarBop at Login", isOn: launchAtLoginBinding)
+                    .fontWeight(.medium)
+                    .disabled(!launchAtLoginController.canChange)
+
+                Text("Keeps menu bar effects available after you sign in to your Mac.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if launchAtLoginController.status == .requiresApproval {
+                    loginItemMessage(
+                        "Allow BarBop in System Settings → General → Login Items & Extensions.",
+                        showSettingsButton: true
+                    )
+                } else if launchAtLoginController.status == .unavailable {
+                    loginItemMessage(
+                        "Launch at Login is unavailable for this copy of BarBop. Move the app to Applications and reopen it.",
+                        showSettingsButton: false
+                    )
+                } else if let errorMessage = launchAtLoginController.errorMessage {
+                    loginItemMessage(errorMessage, showSettingsButton: true)
                 }
             }
         }
@@ -411,6 +440,38 @@ struct ContentView: View {
                 reload()
             }
         )
+    }
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { launchAtLoginController.isEnabled },
+            set: { enabled in
+                Task {
+                    await launchAtLoginController.setEnabled(enabled)
+                }
+            }
+        )
+    }
+
+    private func loginItemMessage(_ message: String, showSettingsButton: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .accessibilityHidden(true)
+                Text(message)
+                    .font(.caption)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if showSettingsButton {
+                Button("Open Login Items Settings") {
+                    launchAtLoginController.openLoginItemsSettings()
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
     }
 
     private var notificationDisplaySelectionBinding: Binding<NotificationDisplaySelection> {

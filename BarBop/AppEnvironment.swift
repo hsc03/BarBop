@@ -15,6 +15,7 @@ final class AppEnvironment: ObservableObject {
     let firstLaunchStore: FirstLaunchStore
     let localTestNotificationController: LocalTestNotificationController
     let appUpdateController: AppUpdateController
+    let launchAtLoginController: LaunchAtLoginController
     @Published private(set) var clickMonitoringState: ClickMonitoringState = .stopped
 
     lazy var menuBarEffectController = MenuBarEffectController()
@@ -33,18 +34,21 @@ final class AppEnvironment: ObservableObject {
         self.firstLaunchStore = FirstLaunchStore()
         self.localTestNotificationController = LocalTestNotificationController()
         self.appUpdateController = AppUpdateController()
+        self.launchAtLoginController = LaunchAtLoginController(dependencies: .live)
     }
 
     init(
         effectSettingsStore: EffectSettingsStore,
         firstLaunchStore: FirstLaunchStore,
         localTestNotificationController: LocalTestNotificationController,
-        appUpdateController: AppUpdateController
+        appUpdateController: AppUpdateController,
+        launchAtLoginController: LaunchAtLoginController
     ) {
         self.effectSettingsStore = effectSettingsStore
         self.firstLaunchStore = firstLaunchStore
         self.localTestNotificationController = localTestNotificationController
         self.appUpdateController = appUpdateController
+        self.launchAtLoginController = launchAtLoginController
     }
 
     func updateClickMonitoringState(_ state: ClickMonitoringState) {

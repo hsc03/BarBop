@@ -22,6 +22,7 @@
 - Configurable colors, opacity, and duration
 - Follow-notification, main, specific, or all-display notification targeting
 - Multi-display click effects that stay on the clicked display
+- Optional launch at login for continuous menu bar availability
 - Reduce Motion fallback and click-through overlays
 - Local settings with migration and corrupted-data recovery
 - Signed in-app update support through Sparkle 2
@@ -38,6 +39,7 @@ Install with the personal Homebrew Tap:
 
 ```sh
 brew install --cask hsc03/tap/barbop
+open -a BarBop
 ```
 
 Or download `BarBop.zip` from the
@@ -45,7 +47,8 @@ Or download `BarBop.zip` from the
 unzip it, and move `BarBop.app` to `/Applications`.
 
 Release builds are signed with Developer ID and notarized by Apple. Open BarBop
-and use its Aurora Bar icon in the macOS menu bar.
+once after installation, then use its Aurora Bar icon in the macOS menu bar.
+Homebrew installs applications without launching them automatically.
 
 ## Build from Source
 
@@ -76,6 +79,7 @@ BarBop appears only in the menu bar. Click its Aurora Bar status icon to open
 the attached settings popover.
 
 - **Effects** controls click effects and the appearance shared by both triggers.
+- **Launch BarBop at Login** starts the menu bar app automatically after sign-in.
 - **Notifications** controls the experimental notification trigger and its
   target display.
 - **Test Notification & Troubleshooting** can send one fixed local test
