@@ -78,6 +78,28 @@ struct NotificationBannerCoreTests {
         #expect(secondAccepted)
     }
 
+    @Test func alertStackDeduplicatorCollapsesHorizontalAnimationOnly() {
+        var deduplicator = NotificationBannerAlertStackDeduplicator(duplicateInterval: 0.4)
+        let enteringFrame = CGRect(x: 1450, y: 49, width: 344, height: 57)
+        let settledFrame = CGRect(x: 1175, y: 49, width: 344, height: 57)
+
+        let firstAccepted = deduplicator.shouldAccept(screenID: 1, frame: enteringFrame, at: 10)
+        let animationDuplicateAccepted = deduplicator.shouldAccept(screenID: 1, frame: settledFrame, at: 10.1)
+        let otherScreenAccepted = deduplicator.shouldAccept(screenID: 2, frame: settledFrame, at: 10.1)
+        let otherVerticalPositionAccepted = deduplicator.shouldAccept(
+            screenID: 1,
+            frame: CGRect(x: 1175, y: 130, width: 344, height: 57),
+            at: 10.1
+        )
+        let afterIntervalAccepted = deduplicator.shouldAccept(screenID: 1, frame: settledFrame, at: 10.5)
+
+        #expect(firstAccepted)
+        #expect(!animationDuplicateAccepted)
+        #expect(otherScreenAccepted)
+        #expect(otherVerticalPositionAccepted)
+        #expect(afterIntervalAccepted)
+    }
+
     @Test func latencyMetricsTrackAverageMaximumAndClampNegativeValues() {
         var metrics = NotificationBannerLatencyMetrics()
 
@@ -188,34 +210,93 @@ struct NotificationBannerCoreTests {
         ))
     }
 
+    @Test func structureClassifierAcceptsOnlyConfirmedAlertStackContainerSignature() {
+        let structureClassifier = NotificationBannerStructureClassifier()
+
+        #expect(structureClassifier.signature(
+            role: "AXGroup",
+            subrole: nil,
+            depth: 0,
+            directChildRole: "AXGroup",
+            directChildSubrole: "AXNotificationCenterAlertStack"
+        ) == .alertStackContainer)
+        #expect(structureClassifier.signature(
+            role: "AXGroup",
+            subrole: nil,
+            depth: 1,
+            directChildRole: "AXGroup",
+            directChildSubrole: "AXNotificationCenterAlertStack"
+        ) == nil)
+        #expect(structureClassifier.signature(
+            role: "AXGroup",
+            subrole: "AXNotificationCenterAlertStack",
+            depth: 0,
+            directChildRole: nil,
+            directChildSubrole: nil
+        ) == nil)
+        #expect(structureClassifier.signature(
+            role: "AXScrollArea",
+            subrole: nil,
+            depth: 0,
+            directChildRole: "AXGroup",
+            directChildSubrole: "AXNotificationCenterAlertStack"
+        ) == nil)
+    }
+
+    @Test func alertStackCandidateUsesStableChildFrameAndRejectsLooseGeometry() {
+        let classifier = NotificationBannerAlertStackCandidateClassifier()
+        let container = CGRect(x: 1100, y: 49, width: 620, height: 73)
+        let alertStack = CGRect(x: 1100, y: 49, width: 344, height: 57)
+
+        #expect(classifier.classify(
+            containerFrame: container,
+            alertStackFrame: alertStack,
+            screens: [primary]
+        ) == NotificationBannerCandidate(frame: alertStack, screenID: primary.id))
+        #expect(classifier.classify(
+            containerFrame: CGRect(x: 900, y: 0, width: 752, height: 962),
+            alertStackFrame: alertStack,
+            screens: [primary]
+        ) == nil)
+        #expect(classifier.classify(
+            containerFrame: container,
+            alertStackFrame: CGRect(x: 100, y: 500, width: 344, height: 57),
+            screens: [primary]
+        ) == nil)
+    }
+
     @Test func eventClassifierAcceptsOnlyConfirmedRootLayoutChange() {
         let eventClassifier = NotificationBannerEventClassifier()
         let frame = CGRect(x: 1000, y: 40, width: 344, height: 73)
 
         #expect(eventClassifier.classify(
             notificationName: "AXLayoutChanged",
-            role: "AXGroup",
-            subrole: "AXNotificationCenterBanner",
+            structure: .notificationBanner,
             parentDepth: 0,
             frame: frame,
             screens: [primary]
         )?.screenID == primary.id)
         #expect(eventClassifier.classify(
             notificationName: "AXCreated",
-            role: "AXGroup",
-            subrole: "AXNotificationCenterBanner",
+            structure: .notificationBanner,
             parentDepth: 0,
             frame: frame,
             screens: [primary]
         ) == nil)
         #expect(eventClassifier.classify(
             notificationName: "AXLayoutChanged",
-            role: "AXGroup",
-            subrole: "AXNotificationCenterBanner",
+            structure: .notificationBanner,
             parentDepth: 1,
             frame: frame,
             screens: [primary]
         ) == nil)
+        #expect(eventClassifier.classify(
+            notificationName: "AXLayoutChanged",
+            structure: .alertStackContainer,
+            parentDepth: 0,
+            frame: frame,
+            screens: [primary]
+        )?.screenID == primary.id)
     }
 
     @Test func callbackPolicyInspectsOnlyLayoutChanges() {

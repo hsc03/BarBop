@@ -59,6 +59,7 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
         let role: String
         let subrole: String?
         let parentDepth: Int
+        let structure: NotificationBannerStructureClassifier.Signature
     }
 
     private struct ElementProbe {
@@ -91,6 +92,7 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
     private let onStateChange: (NotificationBannerMonitorState) -> Void
     private let dependencies: Dependencies
     private let candidateClassifier = NotificationBannerCandidateClassifier()
+    private let alertStackCandidateClassifier = NotificationBannerAlertStackCandidateClassifier()
     private let structureClassifier = NotificationBannerStructureClassifier()
     private let eventClassifier = NotificationBannerEventClassifier()
     private let callbackPolicy = NotificationBannerCallbackPolicy()
@@ -98,7 +100,8 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
     private var observedApplication: AXUIElement?
     private var registeredNotifications: [CFString] = []
     private var lifecycleTokens: [NSObjectProtocol] = []
-    private var deduplicator = NotificationBannerDeduplicator(duplicateInterval: 0.15)
+    private var deduplicator = NotificationBannerDeduplicator(duplicateInterval: 1)
+    private var alertStackDeduplicator = NotificationBannerAlertStackDeduplicator()
     private var isStarted = false
     private var pendingRetryCount = 0
     private var observationGeneration = 0
@@ -177,6 +180,7 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
         diagnostics.resetCounters()
         lastEvent = nil
         deduplicator.reset()
+        alertStackDeduplicator.reset()
     }
 
     fileprivate func receiveCreatedElement(
@@ -197,8 +201,7 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
         let acceptedCandidate = probe.candidate.flatMap { candidate -> CandidateMetadata? in
             eventClassifier.classify(
                 notificationName: notificationName,
-                role: candidate.role,
-                subrole: candidate.subrole,
+                structure: candidate.structure,
                 parentDepth: candidate.parentDepth,
                 frame: candidate.frame,
                 screens: dependencies.screens()
@@ -244,11 +247,22 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
 
         diagnostics.recordCandidate()
         let now = dependencies.uptime()
-        guard deduplicator.shouldAccept(
-            elementIdentity: candidate.elementIdentity,
-            frame: candidate.frame,
-            at: now
-        ) else {
+        let shouldAccept: Bool
+        switch candidate.structure {
+        case .notificationBanner:
+            shouldAccept = deduplicator.shouldAccept(
+                elementIdentity: candidate.elementIdentity,
+                frame: candidate.frame,
+                at: now
+            )
+        case .alertStackContainer:
+            shouldAccept = alertStackDeduplicator.shouldAccept(
+                screenID: candidate.screenID,
+                frame: candidate.frame,
+                at: now
+            )
+        }
+        guard shouldAccept else {
             diagnostics.recordDuplicate()
             return
         }
@@ -476,7 +490,45 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
                         elementIdentity: identity,
                         role: role,
                         subrole: subrole,
-                        parentDepth: parentDepth
+                        parentDepth: parentDepth,
+                        structure: .notificationBanner
+                    ),
+                    snapshots: snapshots,
+                    descendantSnapshots: descendantProbe.snapshots
+                )
+            }
+
+            if
+                parentDepth == 0,
+                let directAlertStack = descendantProbe.snapshots.first(where: {
+                    $0.parentDepth == 1 &&
+                        $0.role == NotificationBannerStructureClassifier.bannerRole &&
+                        $0.subrole == NotificationBannerStructureClassifier.alertStackSubrole
+                }),
+                structureClassifier.signature(
+                    role: role,
+                    subrole: subrole,
+                    depth: parentDepth,
+                    directChildRole: directAlertStack.role,
+                    directChildSubrole: directAlertStack.subrole
+                ) == .alertStackContainer,
+                let containerFrame = candidateFrame,
+                let alertStackFrame = directAlertStack.frame,
+                let classified = alertStackCandidateClassifier.classify(
+                    containerFrame: containerFrame,
+                    alertStackFrame: alertStackFrame,
+                    screens: screens
+                )
+            {
+                return ElementProbe(
+                    candidate: CandidateMetadata(
+                        frame: classified.frame,
+                        screenID: classified.screenID,
+                        elementIdentity: directAlertStack.elementIdentity,
+                        role: role,
+                        subrole: subrole,
+                        parentDepth: parentDepth,
+                        structure: .alertStackContainer
                     ),
                     snapshots: snapshots,
                     descendantSnapshots: descendantProbe.snapshots
@@ -548,7 +600,8 @@ final class NotificationBannerDetector: ObservableObject, NotificationBannerMoni
                     elementIdentity: identity,
                     role: role,
                     subrole: subrole,
-                    parentDepth: current.depth
+                    parentDepth: current.depth,
+                    structure: .notificationBanner
                 )
             }
 

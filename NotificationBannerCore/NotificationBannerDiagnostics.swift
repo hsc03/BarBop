@@ -61,14 +61,79 @@ struct NotificationBannerCandidateClassifier {
     }
 }
 
+struct NotificationBannerAlertStackCandidateClassifier {
+    private let candidateClassifier = NotificationBannerCandidateClassifier()
+
+    func classify(
+        containerFrame: CGRect,
+        alertStackFrame: CGRect,
+        screens: [NotificationBannerScreen]
+    ) -> NotificationBannerCandidate? {
+        guard
+            containerFrame.width >= 300,
+            containerFrame.width <= 700,
+            containerFrame.height >= 60,
+            containerFrame.height <= 100,
+            alertStackFrame.width >= 300,
+            alertStackFrame.width <= 380,
+            alertStackFrame.height >= 40,
+            alertStackFrame.height <= 80,
+            containerFrame.insetBy(dx: -1, dy: -1).contains(
+                CGPoint(x: alertStackFrame.midX, y: alertStackFrame.midY)
+            )
+        else {
+            return nil
+        }
+
+        return candidateClassifier.classify(frame: alertStackFrame, screens: screens)
+    }
+}
+
 struct NotificationBannerStructureClassifier {
     static let bannerRole = "AXGroup"
     static let bannerSubrole = "AXNotificationCenterBanner"
+    static let alertStackSubrole = "AXNotificationCenterAlertStack"
+
+    enum Signature: Equatable {
+        case notificationBanner
+        case alertStackContainer
+    }
 
     func isBanner(role: String, subrole: String?, depth: Int) -> Bool {
-        role == Self.bannerRole &&
-            subrole == Self.bannerSubrole &&
-            (0...6).contains(depth)
+        signature(
+            role: role,
+            subrole: subrole,
+            depth: depth,
+            directChildRole: nil,
+            directChildSubrole: nil
+        ) == .notificationBanner
+    }
+
+    func signature(
+        role: String,
+        subrole: String?,
+        depth: Int,
+        directChildRole: String?,
+        directChildSubrole: String?
+    ) -> Signature? {
+        guard (0...6).contains(depth), role == Self.bannerRole else {
+            return nil
+        }
+
+        if subrole == Self.bannerSubrole {
+            return .notificationBanner
+        }
+
+        if
+            depth == 0,
+            subrole == nil,
+            directChildRole == Self.bannerRole,
+            directChildSubrole == Self.alertStackSubrole
+        {
+            return .alertStackContainer
+        }
+
+        return nil
     }
 }
 
@@ -76,22 +141,23 @@ struct NotificationBannerEventClassifier {
     static let layoutChangedNotification = NotificationBannerCallbackPolicy.layoutChangedNotification
 
     private let candidateClassifier = NotificationBannerCandidateClassifier()
-    private let structureClassifier = NotificationBannerStructureClassifier()
-
     func classify(
         notificationName: String,
-        role: String,
-        subrole: String?,
+        structure: NotificationBannerStructureClassifier.Signature,
         parentDepth: Int,
         frame: CGRect,
         screens: [NotificationBannerScreen]
     ) -> NotificationBannerCandidate? {
         guard
             notificationName == Self.layoutChangedNotification,
-            parentDepth == 0,
-            structureClassifier.isBanner(role: role, subrole: subrole, depth: parentDepth)
+            parentDepth == 0
         else {
             return nil
+        }
+
+        switch structure {
+        case .notificationBanner, .alertStackContainer:
+            break
         }
 
         return candidateClassifier.classify(frame: frame, screens: screens)
@@ -156,6 +222,49 @@ struct NotificationBannerDeduplicator {
     ) -> Bool {
         recentEvents = recentEvents.filter { time - $0.value <= duplicateInterval }
         let key = Key(elementIdentity: elementIdentity, frame: FrameKey(frame))
+
+        if let previousTime = recentEvents[key], time - previousTime <= duplicateInterval {
+            return false
+        }
+
+        recentEvents[key] = time
+        return true
+    }
+
+    mutating func reset() {
+        recentEvents.removeAll()
+    }
+}
+
+struct NotificationBannerAlertStackDeduplicator {
+    private struct Key: Hashable {
+        let screenID: CGDirectDisplayID
+        let y: Int
+        let width: Int
+        let height: Int
+
+        init(screenID: CGDirectDisplayID, frame: CGRect) {
+            self.screenID = screenID
+            y = Int(frame.origin.y.rounded())
+            width = Int(frame.width.rounded())
+            height = Int(frame.height.rounded())
+        }
+    }
+
+    private let duplicateInterval: TimeInterval
+    private var recentEvents: [Key: TimeInterval] = [:]
+
+    init(duplicateInterval: TimeInterval = 0.4) {
+        self.duplicateInterval = duplicateInterval
+    }
+
+    mutating func shouldAccept(
+        screenID: CGDirectDisplayID,
+        frame: CGRect,
+        at time: TimeInterval
+    ) -> Bool {
+        recentEvents = recentEvents.filter { time - $0.value <= duplicateInterval }
+        let key = Key(screenID: screenID, frame: frame)
 
         if let previousTime = recentEvents[key], time - previousTime <= duplicateInterval {
             return false

@@ -1,6 +1,6 @@
 # Release Validation Report
 
-Date: 2026-07-16
+Date: 2026-07-20
 
 Branch: `develop`
 
@@ -18,11 +18,11 @@ remain release gates and are not marked complete by automated results.
 | BarBop Release build | Passed | Current release configuration compiles. |
 | NotificationObserverSpike Debug/Release | Passed | Development-only target compiles with its shared scheme. |
 | Test bundle compile | Passed | Swift Testing bundle compiles. |
-| Unit tests | Passed | Most recent run: 48 tests, 0 failures. |
+| Unit tests | Passed | Most recent run: 51 tests, 0 failures. |
 | Settings migrations | Passed | v1/v2 data migrates to v3 and invalid data recovers. |
 | Notification detector core | Passed | Structure filtering, display selection, deduplication, callback filtering, retry bounds, state, and latency aggregation covered. |
 | Display routing | Passed | Follow, main, specific, disconnected fallback, and all-display policies covered. |
-| Sparkle update controller | Passed | Version UI, updater startup, readiness gating, and manual checks are covered by the 48-test suite. |
+| Sparkle update controller | Passed | Version UI, updater startup, readiness gating, and manual checks are covered by the 51-test suite. |
 
 Command-line execution can emit unrelated CoreSimulator warnings for this
 macOS-only project. Record a new failure only when the build or test command
@@ -49,6 +49,12 @@ itself exits unsuccessfully.
 - Clicking outside the transient popover closed it without terminating BarBop.
 - The non-Sandbox spike can register as an Accessibility client and observe the
   confirmed `AXGroup/AXNotificationCenterBanner` structure.
+- A single isolated Slack example banner produced 12 callbacks and 3 accepted
+  structural candidates, but exactly 1 detection and effect; 2 callbacks from
+  the horizontal entrance animation were removed as duplicates. Effect latency
+  was 5 ms. Slack exposed a root `AXGroup/none` with a direct
+  `AXGroup/AXNotificationCenterAlertStack` child, without requiring content
+  attributes.
 - The Sandbox comparison could not register BarBop as an Accessibility client,
   so direct Developer ID distribution is required.
 - A real Sparkle update from notarized `0.1.0 (3)` to notarized `0.1.0 (4)`

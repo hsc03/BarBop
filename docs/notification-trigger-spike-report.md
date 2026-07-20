@@ -1,6 +1,6 @@
 # Notification Trigger Spike Report
 
-Date: 2026-07-15
+Date: 2026-07-20
 
 Status: Integration validated; release reliability validation pending
 
@@ -34,9 +34,9 @@ the checked-in spike or BarBop entitlements.
 | Spike Release build | Passed | Ad-hoc signed local build completed after lifecycle cleanup changes. |
 | Existing BarBop Debug build | Passed | Existing target still compiles. |
 | Existing BarBop Release build | Passed | Existing target still compiles. |
-| Unit tests | Passed | 48 tests passed, including 14 detector-core tests covering callback filtering and retry bounds, v1/v2-to-v3 migration, four notification display modes, disconnected-display fallback, multi-display rendering, permission/scheduling and alert-style handling, live Accessibility revocation, Accessibility gating, configured-effect routing, and update-controller behavior. |
+| Unit tests | Passed | 51 tests passed, including detector-core coverage for the native banner and Slack alert-stack structures, animation duplicate suppression, callback filtering and retry bounds, v1/v2-to-v3 migration, four notification display modes, disconnected-display fallback, multi-display rendering, permission/scheduling and alert-style handling, live Accessibility revocation, Accessibility gating, configured-effect routing, and update-controller behavior. |
 | Candidate classification | Passed | Boundary rejection and largest cross-display intersection selection are covered by pure tests. |
-| Duplicate suppression | Passed | Same element and frame is suppressed for one second; different elements at the same frame remain distinct. |
+| Duplicate suppression | Passed | Native banners suppress repeated callbacks for the same element and frame for one second. Slack alert-stack entrance animation suppresses repeated geometry callbacks for 0.4 seconds while preserving different screens and vertical positions. |
 | State and diagnostics | Passed | Permission, process, observer states, reconnect counting, and average/maximum latency aggregation are covered by pure tests. |
 | Local test notification | Passed | Permission states, first-use authorization, immediate scheduling, denied behavior, and effect-setting isolation are covered by injected tests. |
 | Rejected callback structure | Passed | The last callback retains up to six structural ancestor snapshots even when no candidate passes the geometry filter. |
@@ -106,6 +106,7 @@ ancestor chain. Rejected callbacks remain visible without reading content.
 | Notification Center process restart | 3 cycles | Observer reconnects | Pending | Pending |
 | Detection-to-effect latency | 20 | Maximum 500 ms | Pending | Pending |
 | BarBop local test banners | 5 | 5 visible banners, each detected exactly once | The product-side visual run passed 5/5 at manual two-second intervals with one effect on all three displays and no residual panel. A later product-only cold start passed after stale TCC entries were reset: the saved yellow Flash effect appeared on all three displays without a preceding ordinary menu bar click. The isolated spike rerun was not countable: approximately five requests produced 6 distinct candidates / 6 detections / 0 duplicates because macOS delivered an earlier delayed local request in the same run; average latency was 24 ms and maximum latency was 67 ms. | Product visual pass; exact isolated 5/5 spike count pending |
+| Slack example banner | 1 | One effect for one visible banner | 12 callbacks, 3 structural candidates, 1 detection, 2 animation duplicates removed; 5 ms effect latency. | Passed as a structural regression sample; external 20-banner gate remains pending |
 | Sandbox observer attachment | 1 connection | Permission granted and observer active | BarBop did not appear in Accessibility | Failed |
 | Sandbox visible banners | 5 | 5 detected, one effect each | Could not start because permission registration failed | Failed |
 
@@ -118,7 +119,10 @@ display IDs. Do not paste notification content into this report.
   `AXLayoutChanged`, `AXValueChanged`, `AXRowCountChanged`,
   `AXSelectedChildrenChanged`, and `AXResized`
 - Accepted event: `AXLayoutChanged` only
-- Observed banner role/subrole: `AXGroup/AXNotificationCenterBanner`
+- Observed native banner role/subrole: `AXGroup/AXNotificationCenterBanner`
+- Observed Slack callback root: `AXGroup/none` at depth `0`, with a direct
+  `AXGroup/AXNotificationCenterAlertStack` child. The stable child frame is
+  used for geometry and display selection; notification content is not read.
 - Accepted parent depth: `0` (the callback element itself)
 - Typical observed banner frames: height `73`, widths approximately `344–577`
 - Latest reset diagnostic: 6 candidates, 6 detections, 0 duplicates,
@@ -126,6 +130,10 @@ display IDs. Do not paste notification content into this report.
   approximately five requests, so the run is retained as latency and structure
   evidence but not counted as the exact five-banner sample; a previously
   delayed local notification was delivered after the reset.
+- Latest isolated Slack example diagnostic: 12 callbacks, 3 accepted
+  structural candidates, 1 detection, 2 duplicates removed, 5 ms average and
+  maximum effect latency. The three candidates were repeated callbacks during
+  one banner's horizontal entrance animation.
 - Rejected structural callbacks included full-screen
   `AXWindow/AXSystemDialog` roots and `AXScrollArea` roots containing the banner
   as a descendant. Restricting acceptance to the banner callback root removes
