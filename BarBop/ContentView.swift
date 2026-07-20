@@ -236,19 +236,17 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Label("Preview limitation", systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.orange)
-                Text("Opening or closing Notification Center may occasionally play an effect. This experimental behavior will be refined in future updates.")
+            if settings.notificationEffectsEnabled {
+                Label {
+                    Text("Known limitation: Opening or closing Notification Center can occasionally trigger an effect.")
+                        .fixedSize(horizontal: false, vertical: true)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                }
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
 
             if isShowingAccessibilityExplanation {
                 VStack(alignment: .leading, spacing: 10) {
@@ -257,6 +255,14 @@ struct ContentView: View {
                     Text("BarBop observes only the structure and position of visible notification banners. It does not read notification contents, app names, keyboard input, or screen pixels.")
                         .font(.caption)
                         .fixedSize(horizontal: false, vertical: true)
+                    Label {
+                        Text("Opening or closing Notification Center can occasionally trigger an effect.")
+                            .fixedSize(horizontal: false, vertical: true)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                    }
+                    .font(.caption)
                     HStack {
                         Button("Cancel") {
                             isShowingAccessibilityExplanation = false
