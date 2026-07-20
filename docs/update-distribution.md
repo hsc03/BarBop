@@ -95,8 +95,9 @@ patch version and a larger build number instead.
 
 ## Required Update Test
 
-Before the first public release, test a complete transition between two
-Developer ID signed and notarized builds using a temporary HTTPS appcast:
+Before the first public release, and again whenever update packaging changes,
+test a complete transition between two Developer ID signed and notarized builds
+using a temporary HTTPS appcast:
 
 - The older build detects the newer build.
 - Release notes and version information are correct.
@@ -108,4 +109,7 @@ Developer ID signed and notarized builds using a temporary HTTPS appcast:
   macOS asks again, BarBop's onboarding recovers cleanly.
 - Homebrew-installed copies do not leave duplicate application bundles.
 
-The public release remains blocked until this end-to-end update test passes.
+Do not leave temporary update-test releases or tags public after validation.
+The final release remains blocked until the exact release candidate passes this
+end-to-end test and its downloaded artifact passes signature, Gatekeeper, and
+stapling validation.

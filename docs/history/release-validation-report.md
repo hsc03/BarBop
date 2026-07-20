@@ -24,7 +24,7 @@ project owner accepted this known limitation only for a clearly labeled
 | Settings migrations | Passed | v1/v2 data migrates to v3 and invalid data recovers. |
 | Notification detector core | Passed | Structure filtering, display selection, deduplication, callback filtering, retry bounds, state, and latency aggregation covered. |
 | Display routing | Passed | Follow, main, specific, disconnected fallback, and all-display policies covered. |
-| Sparkle update controller | Passed | Version UI, updater startup, readiness gating, and manual checks are covered by the 51-test suite. |
+| Sparkle update controller | Passed | Version UI, updater startup, readiness gating, and manual checks are included in the full 59-test suite. |
 
 Command-line execution can emit unrelated CoreSimulator warnings for this
 macOS-only project. Record a new failure only when the build or test command

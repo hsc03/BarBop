@@ -45,7 +45,7 @@ Do not publish the tap until all of the following are complete:
   a browser session.
 - SHA-256 is calculated from the exact final ZIP uploaded to GitHub.
 
-Current pre-release state at the time this document was written:
+Current source-preview state:
 
 - Proposed first public version: `0.1.0` with Git tag `v0.1.0`.
 - The current project deployment target is macOS `26.5`; lowering it requires
@@ -53,11 +53,15 @@ Current pre-release state at the time this document was written:
 - The current local Release build is `arm64` only. Keep the first Cask
   Apple-silicon-only unless an `x86_64` or universal build is produced and
   tested on Intel hardware.
-- Notification-effect reliability and multi-display interactive validation
-  remain release gates. See `docs/notification-trigger-spike-report.md` and
-  `docs/phase-5-quality-checklist.md`.
-- A Developer ID Application identity and successful notarization are not yet
-  available in the current environment.
+- Notification Effects are experimental because Notification Center
+  open/close can still cause a false effect. The limitation must remain visible
+  in release notes and in-app UI.
+- Historical reliability evidence and pending manual checks are archived in
+  the [notification spike report](history/notification-trigger-spike-report.md)
+  and [quality checklist](history/phase-5-quality-checklist.md).
+- No stable public ZIP currently exists. The final source commit must be
+  archived, Developer ID signed, notarized, stapled, and revalidated before the
+  Cask is published; results from an earlier test build are not transferable.
 
 ## Create the Tap Repository
 
@@ -95,7 +99,7 @@ commands from this document. Issues about the application belong in
 
 ## Publish the BarBop Release
 
-Use the release workflow in `docs/release-process.md`. The final public asset
+Use the [release workflow](release-process.md). The final public asset
 must be named `BarBop.zip` and contain a single top-level `BarBop.app` bundle.
 
 After uploading the final ZIP to GitHub, download it again from the public

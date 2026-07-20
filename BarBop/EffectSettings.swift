@@ -1,10 +1,3 @@
-//
-//  EffectSettings.swift
-//  BarBop
-//
-//  Created by Codex on 7/13/26.
-//
-
 import AppKit
 import Foundation
 

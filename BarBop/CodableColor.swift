@@ -1,10 +1,3 @@
-//
-//  CodableColor.swift
-//  BarBop
-//
-//  Created by Codex on 7/13/26.
-//
-
 import AppKit
 
 struct CodableColor: Codable, Equatable {

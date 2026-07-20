@@ -1,10 +1,3 @@
-//
-//  BarBopTests.swift
-//  BarBopTests
-//
-//  Created by 황성철 on 7/7/26.
-//
-
 import AppKit
 import CoreGraphics
 import Foundation

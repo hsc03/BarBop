@@ -1,10 +1,3 @@
-//
-//  MenuBarEffectController.swift
-//  BarBop
-//
-//  Created by Codex on 7/13/26.
-//
-
 import AppKit
 
 protocol MenuBarEffectRendering: AnyObject {

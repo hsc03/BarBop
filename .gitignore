@@ -5,6 +5,8 @@
 ## User settings
 xcuserdata/
 .DS_Store
+DerivedData/
+*.xcresult
 
 ## Obj-C/Swift specific
 *.hmap
@@ -14,6 +16,20 @@ xcuserdata/
 *.dSYM.zip
 *.dSYM
 build/
+*.xcarchive
+*.dmg
+*.zip
+
+## Local signing and secrets
+Signing.local.xcconfig
+*.p12
+*.p8
+*.pem
+*.key
+*.mobileprovision
+.env
+.env.*
+!.env.example
 
 ## Playgrounds
 timeline.xctimeline

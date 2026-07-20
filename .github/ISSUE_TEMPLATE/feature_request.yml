@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest a focused improvement to BarBop
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the user-visible result rather than only an implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Permission and privacy impact
+      description: Note any new macOS permission, observed data, storage, or network behavior. Write None if there is no impact.
+    validations:
+      required: true

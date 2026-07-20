@@ -1,10 +1,3 @@
-//
-//  FirstLaunchStore.swift
-//  BarBop
-//
-//  Created by Codex on 7/14/26.
-//
-
 import Foundation
 
 final class FirstLaunchStore {

@@ -1,128 +1,130 @@
 # BarBop
 
-BarBop is a small macOS menu bar utility that adds short visual effects for
-menu bar clicks and visible notification banners. It does not modify system
-menus or third-party menu bar apps. Effects appear in temporary click-through
-overlays and use the display policy selected by the user.
+<p align="center">
+  <img src="BarBop/Assets.xcassets/AppIcon.appiconset/AppIcon-256x256.png" width="128" alt="BarBop Aurora Bar app icon">
+</p>
 
-The `0.1.0` release is an early preview. Notification Effects remain
-experimental while their macOS Accessibility-based detection is refined.
+<p align="center">
+  A macOS menu bar utility that adds short visual effects to menu bar clicks
+  and visible notification banners.
+</p>
 
-## Current Features
+![BarBop settings popover](docs/assets/settings-popover.png)
 
-- Menu bar click detection
-- First-launch settings popover guidance
-- Conditional guidance when click monitoring cannot start
-- Click-through menu bar overlay
-- Multi-display menu bar targeting
-- Effect enable/disable setting
-- Color, opacity, duration, and style settings
-- Flash, Pulse, Sweep, and Aurora effects
-- Reduce Motion fallback
-- Local settings persistence with recovery from invalid stored data
-- Local test notification control for notification-trigger diagnostics
-- Experimental effects for visible notification banners, using the same color,
-  Aurora palette, opacity, duration, and style as click effects
-- Notification display targeting: follow the visible banner, use the main or a
-  specific display, or play simultaneously on every connected display
+> [!IMPORTANT]
+> BarBop is currently a source preview. There is no supported stable binary or
+> Homebrew package yet. Notification Effects are experimental and off by
+> default.
 
-## Product Boundaries
+## Features
 
-BarBop intentionally does not:
+- Independent Click Effects and Notification Effects
+- Flash, Pulse, Sweep, Lightning, Shimmer, and three-color Aurora styles
+- Configurable colors, opacity, and duration
+- Follow-notification, main, specific, or all-display notification targeting
+- Multi-display click effects that stay on the clicked display
+- Reduce Motion fallback and click-through overlays
+- Local settings with migration and corrupted-data recovery
+- Signed in-app update support through Sparkle 2
 
-- Change the appearance of macOS system menus
-- Change third-party menu bar app popovers
-- Intercept clicks and replay them
-- Read menu contents
-- Capture screenshots or screen pixels
-- Send analytics or network requests
+## Requirements
 
-## Development Flow
+- macOS 26.5 or later
+- Apple silicon
+- Xcode 26.6 or later when building from source
 
-Current exploratory work happens directly on `develop`. Release preparation
-happens on `release`, and final stable history is merged into `main`.
-
-Useful checks:
+## Build from Source
 
 ```sh
-xcodebuild -scheme BarBop -configuration Debug -destination 'platform=macOS' build
-xcodebuild -scheme BarBop -configuration Release -destination 'platform=macOS' build
+git clone https://github.com/hsc03/BarBop.git
+cd BarBop
+open BarBop.xcodeproj
 ```
 
-Unit tests use Swift Testing, but sandboxed command-line test execution may be
-blocked by CoreSimulator or test manager permissions in some environments.
+Select the `BarBop` scheme and **My Mac**, then run the app. A local build uses
+**Sign to Run Locally** and does not require the repository owner's Apple
+Developer team. Rebuilding or moving the app may require macOS to approve its
+Accessibility access again.
 
-`NotificationObserverSpike` is a development-only diagnostic target used to
-verify Notification Center's public Accessibility structure. It is not bundled
-in the BarBop application or included in release ZIP files, and its target is
-explicitly marked to skip installation.
+Command-line builds are also supported:
 
-The production app and diagnostic target compile the same detector sources from
-`NotificationBannerCore`. These sources are linked into each app binary; they
-are not a separate framework or release artifact.
+```sh
+xcodebuild -project BarBop.xcodeproj \
+  -scheme BarBop \
+  -configuration Debug \
+  -destination 'platform=macOS' \
+  build
+```
 
-On the first launch, BarBop opens its settings popover from the menu bar item
-once. Later, clicking the BarBop menu bar item toggles the same attached
-popover; no separate settings window is created. Effects and Notifications are
-organized in separate tabs. Click-monitoring guidance appears only when the
-system-wide mouse event monitor cannot start. BarBop does not monitor keyboard
-events.
+## Usage
 
-The Notifications tab includes a collapsed Troubleshooting section that can
-send a fixed local test notification after the user grants macOS notification
-permission. This diagnostic action does not enable notification effects,
-change effect settings, or use the network.
+BarBop appears only in the menu bar. Click its Aurora Bar status icon to open
+the attached settings popover.
 
-Click Effects and Notification Effects are independent. Notification Effects
-observe only banners that macOS actually displays. Enabling them requires
-Accessibility approval because BarBop watches the public structural
-Accessibility events exposed by Notification Center. BarBop does not read the
-notification title, body, source app, or button labels. BarBop explains this
-use before opening the macOS Accessibility prompt and disables notification
-effects if access is later revoked.
+- **Effects** controls click effects and the appearance shared by both triggers.
+- **Notifications** controls the experimental notification trigger and its
+  target display.
+- **Troubleshooting** can send one fixed local test notification without
+  enabling Notification Effects.
 
-Local test notifications also require BarBop alerts to use a visible banner or
-alert style. Troubleshooting links to System Settings when local notifications
-are denied or their banners are disabled. Focus modes and other system delivery
-settings can still suppress a test banner.
+Click Effects work independently of Notification Effects. Notification Effects
+react only to banners macOS actually displays; Focus modes and per-app delivery
+settings can suppress those banners.
 
-Notification display selection is stored by the display's stable UUID. If a
-selected display is disconnected, BarBop temporarily uses the current main
-display and automatically resumes the selected display when it reconnects.
+## Permissions and Privacy
 
-## Preview Limitation
+Click Effects observe mouse-down events and screen geometry. BarBop does not
+observe keyboard events or store click history.
 
-Opening or closing Notification Center can occasionally produce the same
-public Accessibility structure as a newly displayed notification banner. As a
-result, Notification Effects may rarely play while the user opens or closes
-Notification Center. The final local validation observed one false effect in
-ten open/close cycles. Notification Effects are off by default and clearly
-marked Experimental; users who prefer deterministic behavior can leave them
-disabled without affecting Click Effects.
+Notification Effects require Accessibility access because BarBop observes the
+public structural Accessibility events exposed by Notification Center. It reads
+event type, element identity, role, subrole, frame, parent depth, timing, and a
+derived display ID. It does **not** read notification titles, bodies, source app
+names, button labels, screenshots, or screen pixels.
 
-BarBop does not inspect notification contents or use private APIs, Notification
-Center databases, screenshots, or OCR to work around this limitation.
+BarBop does not send analytics or effect data. Network access is limited to
+checking for and downloading signed application updates from this repository
+through Sparkle. See [Privacy and Permissions](docs/privacy-and-permissions.md)
+for the complete data and permission boundary.
+
+## Experimental Notification Limitation
+
+Opening or closing Notification Center can occasionally expose the same public
+Accessibility structure as a new banner and play one unintended effect. The
+latest validation observed one false effect in ten open/close cycles.
+Notification Effects remain off by default, and Click Effects are unaffected.
+
+BarBop will not work around this limitation by reading notification contents,
+using private APIs or Notification Center databases, or capturing the screen.
+
+## Development
+
+The production app and the development-only `NotificationObserverSpike` target
+share `NotificationBannerCore`. The spike is not installed with BarBop and is
+not included in release archives.
+
+Run the automated checks with:
+
+```sh
+xcodebuild -project BarBop.xcodeproj \
+  -scheme BarBop \
+  -configuration Debug \
+  -destination 'platform=macOS' \
+  test
+```
+
+Read [Contributing](CONTRIBUTING.md) before opening an issue or pull request.
+Security reports should follow [Security Policy](SECURITY.md).
 
 ## Documentation
 
-- Product plan: `docs/product-plan.md`
-- Engineering harness: `docs/engineering-harness.md`
-- Privacy and permissions: `docs/privacy-and-permissions.md`
-- Manual verification: `docs/phase-5-quality-checklist.md`
-- Release validation results: `docs/release-validation-report.md`
-- Personal Homebrew Tap distribution: `docs/personal-homebrew-tap.md`
-- In-app update distribution: `docs/update-distribution.md`
+- [Documentation index](docs/README.md)
+- [Architecture](docs/architecture.md)
+- [Privacy and permissions](docs/privacy-and-permissions.md)
+- [Release process](docs/release-process.md)
+- [Application updates](docs/update-distribution.md)
+- [Personal Homebrew Tap](docs/personal-homebrew-tap.md)
 
-## Distribution Goal
+## License
 
-The release path targets a signed and notarized macOS app distributed through
-GitHub Releases first. Homebrew Cask support is planned after a release artifact
-and SHA-256 checksum are available.
-
-Signed in-app updates use Sparkle 2, an EdDSA-signed appcast hosted in this
-repository, and immutable notarized ZIP assets from GitHub Releases. Homebrew
-users may use either BarBop's update UI or `brew upgrade --cask barbop`.
-
-Notification banner observation requires Accessibility access and is not
-compatible with BarBop's tested App Sandbox build. BarBop therefore targets
-direct Developer ID distribution rather than the Mac App Store.
+BarBop is available under the [MIT License](LICENSE).

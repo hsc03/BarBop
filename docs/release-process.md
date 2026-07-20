@@ -38,6 +38,14 @@ Before public distribution, the app must be signed with a Developer ID
 Application certificate. Development, ad hoc, Mac App Store, and local signing
 identities are not suitable for direct public distribution.
 
+The checked-in Debug and Release configurations intentionally use **Sign to
+Run Locally** and contain no personal Developer Team ID. This lets contributors
+build without the maintainer's Apple account. Before creating a distribution
+archive, the maintainer must locally select their own Team and an Apple
+Development signing certificate in Xcode. Do not commit that personal Team ID
+or certificate selection. Organizer will re-sign the exported distribution
+with Developer ID Application.
+
 Release signing should satisfy:
 
 - Developer ID Application certificate
@@ -135,7 +143,7 @@ Use this as the body of the GitHub Release:
 ### Changes
 
 - Menu bar click effect utility for macOS.
-- Flash, Pulse, Sweep, and Aurora effect styles.
+- Flash, Pulse, Sweep, Lightning, Shimmer, and Aurora effect styles.
 - Local settings for color, opacity, duration, and style.
 
 ### Verification
@@ -166,9 +174,9 @@ After the GitHub Release is published, the Homebrew Cask step needs:
 - Uninstall and zap behavior
 
 The first Homebrew distribution will use the separate public personal tap
-`hsc03/homebrew-tap`. Follow `docs/personal-homebrew-tap.md` for the repository
-layout, Cask template, validation commands, update policy, and completion
-criteria.
+`hsc03/homebrew-tap`. Follow [Personal Homebrew Tap Distribution](personal-homebrew-tap.md)
+for the repository layout, Cask template, validation commands, update policy,
+and completion criteria.
 
 Sparkle key handling, appcast generation, and end-to-end update verification
-are documented in `docs/update-distribution.md`.
+are documented in [Application Updates](update-distribution.md).

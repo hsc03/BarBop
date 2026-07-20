@@ -11,7 +11,7 @@ Branch: `develop`
 - [x] Release build succeeds.
 - [ ] Xcode Issue Navigator has no errors.
 - [x] Swift Testing unit tests compile.
-- [x] Command-line execution passes the full 48-test suite.
+- [x] Command-line execution passes the full 59-test suite.
 
 ## Manual App Checks
 

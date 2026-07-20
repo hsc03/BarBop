@@ -1,10 +1,3 @@
-//
-//  MenuBarGeometry.swift
-//  BarBop
-//
-//  Created by Codex on 7/7/26.
-//
-
 import AppKit
 import ColorSync
 import CoreGraphics

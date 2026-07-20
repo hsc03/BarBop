@@ -1,0 +1,65 @@
+name: Bug report
+description: Report a reproducible BarBop problem
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve BarBop. Do not include notification contents, credentials, signing files, or unredacted private screenshots.
+  - type: input
+    id: version
+    attributes:
+      label: BarBop version
+      description: Include both version and build number when available.
+      placeholder: 0.1.0 (5) or source commit
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: macOS version, Mac model or chip, and number of connected displays.
+      placeholder: macOS 26.5, Apple M-series, two displays
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Click Effects
+        - Notification Effects
+        - Settings
+        - Updates
+        - Installation or launch
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Use synthetic notification text and redact display names or other private information.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed notification contents, credentials, signing material, and unrelated personal information.
+          required: true
