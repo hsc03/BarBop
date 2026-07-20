@@ -835,6 +835,28 @@ struct BarBopTests {
         #expect(controller.errorMessage?.contains("could not be added") == true)
     }
 
+    @Test @MainActor func launchAtLoginUnavailableStatusStillAllowsRegistrationAttempt() async {
+        var currentStatus = LaunchAtLoginStatus.unavailable
+        var registerCount = 0
+        let controller = LaunchAtLoginController(
+            dependencies: .init(
+                status: { currentStatus },
+                register: {
+                    registerCount += 1
+                    currentStatus = .enabled
+                },
+                unregister: {},
+                openLoginItemsSettings: {}
+            )
+        )
+
+        await controller.setEnabled(true)
+
+        #expect(registerCount == 1)
+        #expect(controller.status == .enabled)
+        #expect(controller.isEnabled)
+    }
+
     @Test @MainActor func appUpdateControllerStartsOnceAndChecksOnlyWhenReady() {
         var startCount = 0
         var checkCount = 0

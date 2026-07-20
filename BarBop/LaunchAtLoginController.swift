@@ -59,7 +59,7 @@ final class LaunchAtLoginController: ObservableObject {
     }
 
     var canChange: Bool {
-        !isUpdating && status != .unavailable
+        !isUpdating
     }
 
     func refresh() {

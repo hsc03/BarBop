@@ -206,18 +206,18 @@ struct ContentView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                if launchAtLoginController.status == .requiresApproval {
+                if let errorMessage = launchAtLoginController.errorMessage {
+                    loginItemMessage(errorMessage, showSettingsButton: true)
+                } else if launchAtLoginController.status == .requiresApproval {
                     loginItemMessage(
                         "Allow BarBop in System Settings → General → Login Items & Extensions.",
                         showSettingsButton: true
                     )
                 } else if launchAtLoginController.status == .unavailable {
                     loginItemMessage(
-                        "Launch at Login is unavailable for this copy of BarBop. Move the app to Applications and reopen it.",
-                        showSettingsButton: false
+                        "macOS could not find a login item registration yet. Try enabling it, or open Login Items settings if the problem continues.",
+                        showSettingsButton: true
                     )
-                } else if let errorMessage = launchAtLoginController.errorMessage {
-                    loginItemMessage(errorMessage, showSettingsButton: true)
                 }
             }
         }
