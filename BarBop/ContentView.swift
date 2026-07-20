@@ -16,10 +16,20 @@ struct ContentView: View {
             header
             tabPicker
             Divider()
-            ScrollView {
-                selectedTabContent
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                    .padding(.vertical, 2)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    selectedTabContent
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        .padding(.vertical, 2)
+                }
+                .onChange(of: isTroubleshootingExpanded) { _, isExpanded in
+                    guard isExpanded, selectedTab == .notifications else { return }
+                    DispatchQueue.main.async {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            proxy.scrollTo("troubleshooting-bottom", anchor: .bottom)
+                        }
+                    }
+                }
             }
             footer
         }
@@ -271,7 +281,7 @@ struct ContentView: View {
 
             Divider()
 
-            DisclosureGroup("Troubleshooting", isExpanded: $isTroubleshootingExpanded) {
+            DisclosureGroup("Test Notification & Troubleshooting", isExpanded: $isTroubleshootingExpanded) {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Text("Local notification permission")
@@ -300,6 +310,9 @@ struct ContentView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                    Color.clear
+                        .frame(height: 1)
+                        .id("troubleshooting-bottom")
                 }
                 .padding(.top, 10)
             }
